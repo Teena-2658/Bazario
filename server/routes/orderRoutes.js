@@ -18,14 +18,20 @@ router.post(
     try {
       const { productId, qty, shippingAddress } = req.body;
 
+      console.log("CLIENT_URL:", process.env.CLIENT_URL); // debug
+
+      const baseUrl = process.env.CLIENT_URL;
+
+      if (!baseUrl) {
+        return res.status(500).json({
+          message: "CLIENT_URL not set in Render environment variables",
+        });
+      }
+
       const product = await Product.findById(productId);
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
-
-      // ✅ Stripe needs FULL VALID URL
-      const successUrl = `${process.env.CLIENT_URL}/payment-success`;
-      const cancelUrl = `${process.env.CLIENT_URL}/customer-dashboard`;
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
@@ -43,15 +49,14 @@ router.post(
             quantity: qty,
           },
         ],
-        success_url: successUrl,
-        cancel_url: cancelUrl,
+        success_url: `${baseUrl}/payment-success`,
+        cancel_url: `${baseUrl}/customer-dashboard`,
         metadata: {
           productId: product._id.toString(),
           userId: req.user.id,
         },
       });
 
-      // 🔐 Save order with session id
       const order = new Order({
         user: req.user.id,
         product: product._id,
@@ -65,7 +70,6 @@ router.post(
 
       await order.save();
 
-      // 🔥 VERY IMPORTANT
       res.status(200).json({ url: session.url });
     } catch (error) {
       console.error("Stripe error:", error.message);
@@ -73,6 +77,7 @@ router.post(
     }
   }
 );
+
 
 // ===============================
 // GET MY ORDERS
