@@ -1,6 +1,2 @@
-const API_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5000"
-    : "https://bazario-eg4p.onrender.com";
-
-export { API_URL };
+export const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
