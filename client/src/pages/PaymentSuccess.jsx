@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
@@ -19,7 +20,8 @@ const PaymentSuccess = () => {
         }
 
         const res = await fetch(
-          `http://localhost:5000/api/orders/success?session_id=${sessionId}`,
+          `${API_URL}/api/orders/success?session_id=${sessionId}`
+,
           {
             method: "GET",
             headers: {

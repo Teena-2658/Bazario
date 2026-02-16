@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_URL } from "../config";
 
 const VendorDashboard = () => {
 
@@ -17,236 +18,250 @@ const VendorDashboard = () => {
   const [products, setProducts] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
-  // Load Products
+  // ================= LOAD PRODUCTS =================
   const loadProducts = async () => {
     if (!vendorId) return;
 
-    const res = await fetch(
-      `http://localhost:5000/api/products/vendor/${vendorId}`
-    );
-    const data = await res.json();
-    setProducts(data);
+    try {
+      const res = await fetch(
+        `${API_URL}/api/products/vendor/${vendorId}`
+      );
+      const data = await res.json();
+      setProducts(data);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   useEffect(() => {
     loadProducts();
   }, []);
 
-  // Add / Update Product
+  // ================= ADD / UPDATE PRODUCT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const url = editingId
-      ? `http://localhost:5000/api/products/${editingId}`
-      : "http://localhost:5000/api/products/add";
+    try {
+      const url = editingId
+        ? `${API_URL}/api/products/${editingId}`
+        : `${API_URL}/api/products/add`;
 
-    const method = editingId ? "PUT" : "POST";
+      const method = editingId ? "PUT" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        price: Number(form.price),
-        vendorId,
-      }),
-    });
-
-    if (res.ok) {
-      alert(editingId ? "Product Updated ✅" : "Product Added ✅");
-
-      setForm({
-        title: "",
-        price: "",
-        description: "",
-        image: "",
-        category: "",
-        section: "spotlight",
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          price: Number(form.price),
+          vendorId,
+        }),
       });
 
-      setEditingId(null);
-      loadProducts();
+      if (res.ok) {
+        alert(editingId ? "Product Updated ✅" : "Product Added ✅");
+
+        setForm({
+          title: "",
+          price: "",
+          description: "",
+          image: "",
+          category: "",
+          section: "spotlight",
+        });
+
+        setEditingId(null);
+        loadProducts();
+      }
+    } catch (err) {
+      console.log(err);
+      alert("Something went wrong");
     }
   };
 
-  // Delete Product
+  // ================= DELETE PRODUCT =================
   const deleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
 
-    await fetch(`http://localhost:5000/api/products/${id}`, {
-      method: "DELETE",
-    });
+    try {
+      await fetch(`${API_URL}/api/products/${id}`, {
+        method: "DELETE",
+      });
 
-    loadProducts();
+      loadProducts();
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-return (
-  <div className="min-h-screen bg-[#f6f7fb] p-8">
-    <div className="max-w-7xl mx-auto">
+  return (
+    <div className="min-h-screen bg-[#f6f7fb] p-8">
+      <div className="max-w-7xl mx-auto">
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">
-          🏪 Vendor Dashboard
-        </h1>
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">
+            🏪 Vendor Dashboard
+          </h1>
 
-        <div className="bg-white px-5 py-2 rounded-xl shadow text-sm">
-          Total Products: <span className="font-semibold">{products.length}</span>
-        </div>
-      </div>
-
-      {/* MAIN GRID */}
-      <div className="grid lg:grid-cols-3 gap-8">
-
-        {/* ================= FORM SECTION ================= */}
-        <div className="lg:col-span-1">
-          <div className="bg-white p-6 rounded-2xl shadow-lg sticky top-6">
-            <h2 className="text-xl font-semibold mb-5 border-b pb-3">
-              {editingId ? "Edit Product" : "Add New Product"}
-            </h2>
-
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-            >
-              <input
-                type="text"
-                placeholder="Product Title"
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
-                value={form.title}
-                onChange={(e) =>
-                  setForm({ ...form, title: e.target.value })
-                }
-                required
-              />
-
-              <input
-                type="number"
-                placeholder="Price"
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
-                value={form.price}
-                onChange={(e) =>
-                  setForm({ ...form, price: e.target.value })
-                }
-                required
-              />
-
-              <input
-                type="text"
-                placeholder="Category"
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
-                value={form.category}
-                onChange={(e) =>
-                  setForm({ ...form, category: e.target.value })
-                }
-                required
-              />
-
-              <select
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
-                value={form.section}
-                onChange={(e) =>
-                  setForm({ ...form, section: e.target.value })
-                }
-              >
-                <option value="spotlight">Spotlight</option>
-                <option value="trending">Trending</option>
-                <option value="indemand">In Demand</option>
-                <option value="everybody">Everybody</option>
-              </select>
-
-              <input
-                type="text"
-                placeholder="Image URL"
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
-                value={form.image}
-                onChange={(e) =>
-                  setForm({ ...form, image: e.target.value })
-                }
-                required
-              />
-
-              <textarea
-                placeholder="Description"
-                rows="4"
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                required
-              />
-
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-              >
-                {editingId ? "Update Product" : "Add Product"}
-              </button>
-            </form>
+          <div className="bg-white px-5 py-2 rounded-xl shadow text-sm">
+            Total Products: 
+            <span className="font-semibold"> {products.length}</span>
           </div>
         </div>
 
-        {/* ================= PRODUCT LIST ================= */}
-        <div className="lg:col-span-2">
-          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        {/* MAIN GRID */}
+        <div className="grid lg:grid-cols-3 gap-8">
 
-            {products.map((p) => (
-              <div
-                key={p._id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden group"
-              >
-                <div className="bg-gray-50 p-4">
-                  <img
-                    src={p.image}
-                    alt={p.title}
-                    className="h-40 w-full object-contain group-hover:scale-105 transition"
-                  />
-                </div>
+          {/* ================= FORM SECTION ================= */}
+          <div className="lg:col-span-1">
+            <div className="bg-white p-6 rounded-2xl shadow-lg sticky top-6">
+              <h2 className="text-xl font-semibold mb-5 border-b pb-3">
+                {editingId ? "Edit Product" : "Add New Product"}
+              </h2>
 
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg line-clamp-1">
-                    {p.title}
-                  </h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
 
-                  <p className="text-green-600 font-bold text-lg">
-                    ₹{p.price}
-                  </p>
+                <input
+                  type="text"
+                  placeholder="Product Title"
+                  className="w-full border p-3 rounded-lg"
+                  value={form.title}
+                  onChange={(e) =>
+                    setForm({ ...form, title: e.target.value })
+                  }
+                  required
+                />
 
-                  <p className="text-sm text-gray-500">
-                    {p.category}
-                  </p>
+                <input
+                  type="number"
+                  placeholder="Price"
+                  className="w-full border p-3 rounded-lg"
+                  value={form.price}
+                  onChange={(e) =>
+                    setForm({ ...form, price: e.target.value })
+                  }
+                  required
+                />
 
-                  <div className="flex justify-between mt-4">
-                    <button
-                      onClick={() => {
-                        setForm(p);
-                        setEditingId(p._id);
-                      }}
-                      className="bg-yellow-400 px-4 py-1 rounded-lg text-sm hover:bg-yellow-500 transition"
-                    >
-                      Edit
-                    </button>
+                <input
+                  type="text"
+                  placeholder="Category"
+                  className="w-full border p-3 rounded-lg"
+                  value={form.category}
+                  onChange={(e) =>
+                    setForm({ ...form, category: e.target.value })
+                  }
+                  required
+                />
 
-                    <button
-                      onClick={() => deleteProduct(p._id)}
-                      className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-600 transition"
-                    >
-                      Delete
-                    </button>
+                <select
+                  className="w-full border p-3 rounded-lg"
+                  value={form.section}
+                  onChange={(e) =>
+                    setForm({ ...form, section: e.target.value })
+                  }
+                >
+                  <option value="spotlight">Spotlight</option>
+                  <option value="trending">Trending</option>
+                  <option value="indemand">In Demand</option>
+                  <option value="everybody">Everybody</option>
+                </select>
+
+                <input
+                  type="text"
+                  placeholder="Image URL"
+                  className="w-full border p-3 rounded-lg"
+                  value={form.image}
+                  onChange={(e) =>
+                    setForm({ ...form, image: e.target.value })
+                  }
+                  required
+                />
+
+                <textarea
+                  placeholder="Description"
+                  rows="4"
+                  className="w-full border p-3 rounded-lg"
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                  required
+                />
+
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg"
+                >
+                  {editingId ? "Update Product" : "Add Product"}
+                </button>
+
+              </form>
+            </div>
+          </div>
+
+          {/* ================= PRODUCT LIST ================= */}
+          <div className="lg:col-span-2">
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+
+              {products.map((p) => (
+                <div
+                  key={p._id}
+                  className="bg-white rounded-2xl shadow-md overflow-hidden"
+                >
+                  <div className="bg-gray-50 p-4">
+                    <img
+                      src={p.image}
+                      alt={p.title}
+                      className="h-40 w-full object-contain"
+                    />
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="font-semibold text-lg line-clamp-1">
+                      {p.title}
+                    </h3>
+
+                    <p className="text-green-600 font-bold text-lg">
+                      ₹{p.price}
+                    </p>
+
+                    <p className="text-sm text-gray-500">
+                      {p.category}
+                    </p>
+
+                    <div className="flex justify-between mt-4">
+
+                      <button
+                        onClick={() => {
+                          setForm(p);
+                          setEditingId(p._id);
+                        }}
+                        className="bg-yellow-400 px-4 py-1 rounded-lg text-sm"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => deleteProduct(p._id)}
+                        className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm"
+                      >
+                        Delete
+                      </button>
+
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
+            </div>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
-  </div>
-);
-
+  );
 };
 
 export default VendorDashboard;

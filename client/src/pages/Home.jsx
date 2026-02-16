@@ -3,6 +3,7 @@ import BannerSlider from "../components/BannerSlider";
 import Categories from "../components/Categories";
 import ProductRow from "../components/ProductRow";
 import Footer from "../components/Footer";
+import { API_URL } from "../config";
 
 const Home = () => {
   return (
@@ -19,30 +20,27 @@ const Home = () => {
           <Categories />
         </div>
 
-        {/* Multiple Product Sections */}
-
-        <div className="mt-6 space-y-6 ">
+        <div className="mt-6 space-y-6">
 
           <ProductRow
-  title="Spotlight's On"
-  url="http://localhost:5000/api/products/section/spotlight"
-/>
+            title="Spotlight's On"
+            url={`${API_URL}/api/products/section/spotlight`}
+          />
 
-<ProductRow
-  title="Trends You May Like"
-  url="http://localhost:5000/api/products/section/trending"
-/>
+          <ProductRow
+            title="Trends You May Like"
+            url={`${API_URL}/api/products/section/trending`}
+          />
 
-<ProductRow
-  title="In Demand"
-  url="http://localhost:5000/api/products/section/indemand"
-/>
+          <ProductRow
+            title="In Demand"
+            url={`${API_URL}/api/products/section/indemand`}
+          />
 
-<ProductRow
-  title="On Everybody's List"
-  url="http://localhost:5000/api/products/section/everybody"
-/>
-
+          <ProductRow
+            title="On Everybody's List"
+            url={`${API_URL}/api/products/section/everybody`}
+          />
 
         </div>
 

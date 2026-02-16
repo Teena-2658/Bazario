@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -12,9 +13,11 @@ const ProductDetails = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/products/${id}`
-        );
+       const res = await fetch(
+  `${API_URL}/api/products/${id}`
+
+);
+
 
         if (!res.ok) {
           throw new Error("Product not found");
@@ -50,17 +53,22 @@ const ProductDetails = () => {
       new CustomEvent("cartIncrement", { detail: qty })
     );
 
-    await fetch("http://localhost:5000/api/user/cart", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.token}`,
-      },
-      body: JSON.stringify({
-        productId: product._id,
-        qty: qty,
-      }),
-    });
+  await fetch(
+  `${API_URL}/api/user/cart`
+,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${user.token}`,
+    },
+    body: JSON.stringify({
+      productId: product._id,
+      qty: qty,
+    }),
+  }
+);
+
   };
 
   return (

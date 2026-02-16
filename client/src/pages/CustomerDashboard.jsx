@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -33,26 +34,30 @@ const CustomerDashboard = () => {
     const fetchData = async () => {
       try {
         // CART
-        const cartRes = await fetch(
-          "http://localhost:5000/api/user/cart",
-          {
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
+       const cartRes = await fetch(
+    `${API_URL}/api/user/cart`
+,
+  {
+    headers: {
+      Authorization: `Bearer ${user.token}`,
+    },
+  }
+);
+
         const cartData = await cartRes.json();
         setCart(cartData);
 
         // WISHLIST
-        const wishRes = await fetch(
-          "http://localhost:5000/api/user/wishlist",
-          {
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
+       const wishRes = await fetch(
+  `${API_URL}/api/user/wishlist`
+,
+  {
+    headers: {
+      Authorization: `Bearer ${user.token}`,
+    },
+  }
+);
+
         const wishData = await wishRes.json();
 
         const formattedWishlist = wishData.map((item) => ({
@@ -63,14 +68,16 @@ const CustomerDashboard = () => {
         setWishlist(formattedWishlist);
 
         // MY ORDERS
-        const orderRes = await fetch(
-          "http://localhost:5000/api/orders/my-orders",
-          {
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
+      const orderRes = await fetch(
+  `${API_URL}/api/orders/my-orders`
+,
+  {
+    headers: {
+      Authorization: `Bearer ${user.token}`,
+    },
+  }
+);
+
 
         const orderData = await orderRes.json();
         setOrders(orderData);
@@ -98,21 +105,23 @@ const CustomerDashboard = () => {
     try {
       if (!selectedItem) return;
 
-      const res = await fetch(
-        "http://localhost:5000/api/orders/create-checkout-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-          body: JSON.stringify({
-            productId: selectedItem.product._id,
-            qty: selectedItem.qty,
-            shippingAddress: formData,
-          }),
-        }
-      );
+    const res = await fetch(
+ `${API_URL}/api/orders/create-checkout-session`
+,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${user.token}`,
+    },
+    body: JSON.stringify({
+      productId: selectedItem.product._id,
+      qty: selectedItem.qty,
+      shippingAddress: formData,
+    }),
+  }
+);
+
 
       const data = await res.json();
 

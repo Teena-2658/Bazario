@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
+import { API_URL } from "../config";
 
 const MyOrders = () => {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = user?.token;
 
-      const res = await fetch(
-        "http://localhost:5000/api/orders/my-orders",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`${API_URL}/api/orders/my-orders`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
       setOrders(data);
