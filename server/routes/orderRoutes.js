@@ -12,16 +12,24 @@ const router = express.Router();
 // ============================
 router.post("/create-checkout-session", authMiddleware, async (req, res) => {
   try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2024-06-20",
-    });
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
     const { productId, qty } = req.body;
 
+    // ✅ Safety checks
+    if (!productId || !qty) {
+      return res.status(400).json({
+        message: "ProductId and quantity are required",
+      });
+    }
+
     const product = await Product.findById(productId);
 
-    if (!product)
-      return res.status(404).json({ message: "Product not found" });
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -36,26 +44,24 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
             },
             unit_amount: Math.round(product.price * 100),
           },
-          quantity: qty,
+          quantity: Number(qty),
         },
       ],
 
-      // IMPORTANT
       metadata: {
         productId,
-        qty,
+        qty: String(qty),
         userId: req.user.id,
       },
 
-success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
-
-
+      success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
     });
 
     res.json({ url: session.url });
+
   } catch (err) {
-    console.log("Stripe Error:", err);
+    console.log("STRIPE SESSION ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -65,38 +71,49 @@ cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
 // ============================
 router.get("/success", authMiddleware, async (req, res) => {
   try {
-    console.log("SUCCESS ROUTE HIT"); // 👈 ADD THIS
-
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-    const session = await stripe.checkout.sessions.retrieve(
-      req.query.session_id
-    );
+    const { session_id } = req.query;
 
-    console.log("SESSION:", session.payment_status); // 👈 ADD
+    if (!session_id) {
+      return res.status(400).json({ message: "Session ID missing" });
+    }
 
-    const { productId, qty } = session.metadata;
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+
+    if (session.payment_status !== "paid") {
+      return res.status(400).json({ message: "Payment not completed" });
+    }
+
+    const { productId, qty, userId } = session.metadata;
+
+    // ✅ Prevent duplicate order
+    const existingOrder = await Order.findOne({
+      stripeSessionId: session_id,
+    });
+
+    if (existingOrder) {
+      return res.json({ message: "Order already saved" });
+    }
 
     const order = new Order({
-      user: req.user.id,
+      user: userId,
       product: productId,
-      qty,
+      qty: Number(qty),
       paymentMethod: "Stripe",
       status: "Paid",
+      stripeSessionId: session_id, // 👈 important
     });
 
     await order.save();
 
-    console.log("ORDER SAVED"); // 👈 ADD
-
     res.json({ message: "Order saved successfully" });
+
   } catch (err) {
-    console.log("ERROR:", err);
+    console.log("STRIPE SUCCESS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 });
-
-
 
 // ============================
 // SAVE ORDER (COD)
@@ -123,6 +140,7 @@ router.post("/cod", authMiddleware, async (req, res) => {
     await user.save();
 
     res.json({ message: "Order placed successfully" });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -138,6 +156,7 @@ router.get("/my-orders", authMiddleware, async (req, res) => {
     }).populate("product");
 
     res.json(orders);
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
