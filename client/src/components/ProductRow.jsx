@@ -4,11 +4,18 @@ import ProductCard from "./ProductCard";
 const ProductRow = ({ title, url }) => {
   const [products, setProducts] = useState([]);
 
-  useEffect(() => {
-    fetch(url)
-      .then(res => res.json())
-      .then(data => setProducts(data));
-  }, [url]);
+ useEffect(() => {
+  console.log("URL:", url);
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      console.log("DATA:", data);
+      setProducts(data);
+    })
+    .catch(err => console.error(err));
+}, [url]);
+
 
   return (
     <div className="px-10 py-6">
