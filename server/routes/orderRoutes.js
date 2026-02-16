@@ -32,8 +32,7 @@ router.post(
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
-
-     const session = await stripe.checkout.sessions.create({
+const session = await stripe.checkout.sessions.create({
   payment_method_types: ["card"],
   mode: "payment",
   line_items: [
@@ -42,7 +41,6 @@ router.post(
         currency: "inr",
         product_data: {
           name: product.title,
-          images: [product.image],
         },
         unit_amount: product.price * 100,
       },
