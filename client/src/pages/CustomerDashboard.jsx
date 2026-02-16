@@ -101,35 +101,40 @@ const CustomerDashboard = () => {
   // =============================
   // Stripe Checkout
   // =============================
-  const placeOrder = async () => {
-    try {
-      if (!selectedItem) return;
+const placeOrder = async () => {
+  try {
+    if (!selectedItem) return;
 
     const res = await fetch(
- `${API_URL}/api/orders/create-checkout-session`
-,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${user.token}`,
-    },
-    body: JSON.stringify({
-      productId: selectedItem.product._id,
-      qty: selectedItem.qty,
-      shippingAddress: formData,
-    }),
-  }
-);
+      `${API_URL}/api/orders/create-checkout-session`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          productId: selectedItem.product._id,
+          qty: selectedItem.qty,
+        }),
+      }
+    );
 
+    const data = await res.json();
 
-      const data = await res.json();
+    console.log("Stripe response:", data); // 👈 ADD THIS
 
+    if (data.url) {
       window.location.href = data.url;
-    } catch (error) {
-      console.log("Payment error:", error);
+    } else {
+      alert("Stripe session URL not received");
+      console.log("Full response:", data);
     }
-  };
+  } catch (error) {
+    console.log("Payment error:", error);
+  }
+};
+
 
   // =============================
   // Shared Card UI
