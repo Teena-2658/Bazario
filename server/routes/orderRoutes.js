@@ -33,29 +33,32 @@ router.post(
         return res.status(404).json({ message: "Product not found" });
       }
 
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        mode: "payment",
-        line_items: [
-          {
-            price_data: {
-              currency: "inr",
-              product_data: {
-                name: product.title,
-                images: [product.image],
-              },
-              unit_amount: product.price * 100,
-            },
-            quantity: qty,
-          },
-        ],
-        success_url: `${baseUrl}/payment-success`,
-        cancel_url: `${baseUrl}/customer-dashboard`,
-        metadata: {
-          productId: product._id.toString(),
-          userId: req.user.id,
+     const session = await stripe.checkout.sessions.create({
+  payment_method_types: ["card"],
+  mode: "payment",
+  line_items: [
+    {
+      price_data: {
+        currency: "inr",
+        product_data: {
+          name: product.title,
+          images: [product.image],
         },
-      });
+        unit_amount: product.price * 100,
+      },
+      quantity: qty,
+    },
+  ],
+  success_url:
+    "https://bazario-ruddy.vercel.app/payment-success",
+  cancel_url:
+    "https://bazario-ruddy.vercel.app/customer-dashboard",
+  metadata: {
+    productId: product._id.toString(),
+    userId: req.user.id,
+  },
+});
+
 
       const order = new Order({
         user: req.user.id,
