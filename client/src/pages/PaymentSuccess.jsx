@@ -1,54 +1,34 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { API_URL } from "../config";
 
 const PaymentSuccess = () => {
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
     const saveOrder = async () => {
-      try {
-        const sessionId = new URLSearchParams(
-          window.location.search
-        ).get("session_id");
+      const user = JSON.parse(localStorage.getItem("user"));
 
-        const user = JSON.parse(localStorage.getItem("user"));
-
-        if (!sessionId || !user) {
-          console.log("Missing session or user");
-          return;
+      await fetch(
+        `${API_URL}/api/orders/success?session_id=${sessionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
         }
-
-        const res = await fetch(
-          `${API_URL}/api/orders/success?session_id=${sessionId}`
-,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
-        );
-
-        const data = await res.json();
-        console.log("ORDER SAVE RESPONSE:", data);
-
-        // redirect after save
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1500);
-      } catch (err) {
-        console.log("SAVE ORDER ERROR:", err);
-      }
+      );
     };
 
-    saveOrder();
-  }, []);
+    if (sessionId) {
+      saveOrder();
+    }
+  }, [sessionId]);
 
   return (
-    <div className="h-screen flex justify-center items-center">
-      <h1 className="text-3xl font-bold text-green-600">
-        Payment Successful ✅
+    <div className="text-center mt-20">
+      <h1 className="text-2xl font-bold text-green-600">
+        Payment Successful 🎉
       </h1>
     </div>
   );
