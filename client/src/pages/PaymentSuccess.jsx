@@ -1,23 +1,46 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const PaymentSuccess = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const sessionId = new URLSearchParams(
-      window.location.search
-    ).get("session_id");
+    const saveOrder = async () => {
+      try {
+        const sessionId = new URLSearchParams(
+          window.location.search
+        ).get("session_id");
 
-    if (!sessionId) return;
+        const user = JSON.parse(localStorage.getItem("user"));
 
-    fetch(
-      `http://localhost:5000/api/orders/success?session_id=${sessionId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
+        if (!sessionId || !user) {
+          console.log("Missing session or user");
+          return;
+        }
+
+        const res = await fetch(
+          `http://localhost:5000/api/orders/success?session_id=${sessionId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${user.token}`,
+            },
+          }
+        );
+
+        const data = await res.json();
+        console.log("ORDER SAVE RESPONSE:", data);
+
+        // redirect after save
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      } catch (err) {
+        console.log("SAVE ORDER ERROR:", err);
       }
-    );
+    };
+
+    saveOrder();
   }, []);
 
   return (

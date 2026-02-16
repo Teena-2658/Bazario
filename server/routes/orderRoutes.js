@@ -64,13 +64,15 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
 // ============================
 router.get("/success", authMiddleware, async (req, res) => {
   try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2024-06-20",
-    });
+    console.log("SUCCESS ROUTE HIT"); // 👈 ADD THIS
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
     const session = await stripe.checkout.sessions.retrieve(
       req.query.session_id
     );
+
+    console.log("SESSION:", session.payment_status); // 👈 ADD
 
     const { productId, qty } = session.metadata;
 
@@ -84,18 +86,16 @@ router.get("/success", authMiddleware, async (req, res) => {
 
     await order.save();
 
-    // remove item from cart
-    const user = await User.findById(req.user.id);
-    user.cart = user.cart.filter(
-      (item) => item.product.toString() !== productId
-    );
-    await user.save();
+    console.log("ORDER SAVED"); // 👈 ADD
 
     res.json({ message: "Order saved successfully" });
   } catch (err) {
+    console.log("ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 });
+
+
 
 // ============================
 // SAVE ORDER (COD)

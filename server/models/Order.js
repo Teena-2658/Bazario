@@ -2,20 +2,12 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-    },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
     qty: Number,
-    totalPrice: Number,
-    paymentStatus: {
-      type: String,
-      default: "Pending",
-    },
+    address: Object,
+    paymentMethod: String,
+    status: String,
   },
   { timestamps: true }
 );

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 
 const VendorDashboard = () => {
-  const vendorId = localStorage.getItem("vendorId");
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  const vendorId = user?._id;
 
   const [form, setForm] = useState({
     title: "",

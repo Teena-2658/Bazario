@@ -32,12 +32,8 @@ const Login = () => {
 
       alert("Login Success");
 
-      // ✅ ROLE BASED REDIRECT
-      if (data.user.role === "vendor") {
-        navigate("/vendor-dashboard");
-      } else {
-        navigate("/customer-dashboard");
-      }
+      // ✅ reload so App reads new user
+      window.location.href = "/";
     } else {
       alert(data.message);
     }
@@ -46,6 +42,7 @@ const Login = () => {
   return (
     <div className="flex justify-center items-center h-screen">
       <form onSubmit={handleSubmit} className="bg-white p-6 shadow rounded w-80">
+
         <input
           type="email"
           placeholder="Email"
@@ -67,6 +64,7 @@ const Login = () => {
         <button className="bg-blue-600 text-white w-full py-2 rounded">
           Login
         </button>
+
       </form>
     </div>
   );
