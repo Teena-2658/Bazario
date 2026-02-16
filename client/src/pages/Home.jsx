@@ -21,27 +21,28 @@ const Home = () => {
 
         {/* Multiple Product Sections */}
 
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 space-y-6 ">
 
           <ProductRow
-            title="Spotlight's On"
-            url="https://dummyjson.com/products/category/smartphones?limit=12"
-          />
+  title="Spotlight's On"
+  url="http://localhost:5000/api/products/section/spotlight"
+/>
 
-          <ProductRow
-            title="Trends You May Like"
-            url="https://dummyjson.com/products/category/womens-dresses?limit=12"
-          />
+<ProductRow
+  title="Trends You May Like"
+  url="http://localhost:5000/api/products/section/trending"
+/>
 
-          <ProductRow
-            title="In Demand"
-            url="https://dummyjson.com/products/category/laptops?limit=12"
-          />
+<ProductRow
+  title="In Demand"
+  url="http://localhost:5000/api/products/section/indemand"
+/>
 
-          <ProductRow
-            title="On Everybody's List"
-            url="https://dummyjson.com/products/category/fragrances?limit=12"
-          />
+<ProductRow
+  title="On Everybody's List"
+  url="http://localhost:5000/api/products/section/everybody"
+/>
+
 
         </div>
 
