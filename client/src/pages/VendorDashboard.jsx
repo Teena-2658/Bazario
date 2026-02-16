@@ -80,143 +80,173 @@ const VendorDashboard = () => {
     loadProducts();
   };
 
-  return (
-    <div className="min-h-screen bg-gray-100 p-6">
+return (
+  <div className="min-h-screen bg-[#f6f7fb] p-8">
+    <div className="max-w-7xl mx-auto">
 
-      <div className="max-w-5xl mx-auto">
-
-        <h1 className="text-3xl font-bold mb-6 text-center">
-          Vendor Dashboard
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">
+          🏪 Vendor Dashboard
         </h1>
 
-        {/* Product Form */}
-        <div className="bg-white p-6 rounded-xl shadow mb-8">
-          <h2 className="text-xl font-semibold mb-4">
-            {editingId ? "Edit Product" : "Add New Product"}
-          </h2>
-
-          <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-
-            <input
-              type="text"
-              placeholder="Product Title"
-              className="border p-2 rounded"
-              value={form.title}
-              onChange={(e) =>
-                setForm({ ...form, title: e.target.value })
-              }
-              required
-            />
-
-            <input
-              type="number"
-              placeholder="Price"
-              className="border p-2 rounded"
-              value={form.price}
-              onChange={(e) =>
-                setForm({ ...form, price: e.target.value })
-              }
-              required
-            />
-
-            <input
-              type="text"
-              placeholder="Category"
-              className="border p-2 rounded"
-              value={form.category}
-              onChange={(e) =>
-                setForm({ ...form, category: e.target.value })
-              }
-              required
-            />
-
-            <select
-              className="border p-2 rounded"
-              value={form.section}
-              onChange={(e) =>
-                setForm({ ...form, section: e.target.value })
-              }
-            >
-              <option value="spotlight">Spotlight</option>
-              <option value="trending">Trending</option>
-              <option value="indemand">In Demand</option>
-              <option value="everybody">Everybody</option>
-            </select>
-
-            <input
-              type="text"
-              placeholder="Image URL"
-              className="border p-2 rounded col-span-2"
-              value={form.image}
-              onChange={(e) =>
-                setForm({ ...form, image: e.target.value })
-              }
-              required
-            />
-
-            <textarea
-              placeholder="Description"
-              className="border p-2 rounded col-span-2"
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              required
-            />
-
-            <button
-              type="submit"
-              className="col-span-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-            >
-              {editingId ? "Update Product" : "Add Product"}
-            </button>
-          </form>
+        <div className="bg-white px-5 py-2 rounded-xl shadow text-sm">
+          Total Products: <span className="font-semibold">{products.length}</span>
         </div>
+      </div>
 
-        {/* Product List */}
-        <div className="grid grid-cols-3 gap-6">
-          {products.map((p) => (
-            <div
-              key={p._id}
-              className="bg-white p-4 rounded-xl shadow hover:shadow-lg transition"
+      {/* MAIN GRID */}
+      <div className="grid lg:grid-cols-3 gap-8">
+
+        {/* ================= FORM SECTION ================= */}
+        <div className="lg:col-span-1">
+          <div className="bg-white p-6 rounded-2xl shadow-lg sticky top-6">
+            <h2 className="text-xl font-semibold mb-5 border-b pb-3">
+              {editingId ? "Edit Product" : "Add New Product"}
+            </h2>
+
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-4"
             >
-              <img
-                src={p.image}
-                alt={p.title}
-                className="h-40 w-full object-contain mb-3"
+              <input
+                type="text"
+                placeholder="Product Title"
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+                value={form.title}
+                onChange={(e) =>
+                  setForm({ ...form, title: e.target.value })
+                }
+                required
               />
 
-              <h3 className="font-semibold">{p.title}</h3>
-              <p className="text-green-600 font-bold">₹{p.price}</p>
-              <p className="text-sm text-gray-500">{p.category}</p>
+              <input
+                type="number"
+                placeholder="Price"
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+                value={form.price}
+                onChange={(e) =>
+                  setForm({ ...form, price: e.target.value })
+                }
+                required
+              />
 
-              <div className="flex justify-between mt-3">
+              <input
+                type="text"
+                placeholder="Category"
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+                value={form.category}
+                onChange={(e) =>
+                  setForm({ ...form, category: e.target.value })
+                }
+                required
+              />
 
-                <button
-                  onClick={() => {
-                    setForm(p);
-                    setEditingId(p._id);
-                  }}
-                  className="bg-yellow-400 px-3 py-1 rounded text-sm"
-                >
-                  Edit
-                </button>
+              <select
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+                value={form.section}
+                onChange={(e) =>
+                  setForm({ ...form, section: e.target.value })
+                }
+              >
+                <option value="spotlight">Spotlight</option>
+                <option value="trending">Trending</option>
+                <option value="indemand">In Demand</option>
+                <option value="everybody">Everybody</option>
+              </select>
 
-                <button
-                  onClick={() => deleteProduct(p._id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded text-sm"
-                >
-                  Delete
-                </button>
+              <input
+                type="text"
+                placeholder="Image URL"
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+                value={form.image}
+                onChange={(e) =>
+                  setForm({ ...form, image: e.target.value })
+                }
+                required
+              />
 
+              <textarea
+                placeholder="Description"
+                rows="4"
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                required
+              />
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              >
+                {editingId ? "Update Product" : "Add Product"}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* ================= PRODUCT LIST ================= */}
+        <div className="lg:col-span-2">
+          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+
+            {products.map((p) => (
+              <div
+                key={p._id}
+                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden group"
+              >
+                <div className="bg-gray-50 p-4">
+                  <img
+                    src={p.image}
+                    alt={p.title}
+                    className="h-40 w-full object-contain group-hover:scale-105 transition"
+                  />
+                </div>
+
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg line-clamp-1">
+                    {p.title}
+                  </h3>
+
+                  <p className="text-green-600 font-bold text-lg">
+                    ₹{p.price}
+                  </p>
+
+                  <p className="text-sm text-gray-500">
+                    {p.category}
+                  </p>
+
+                  <div className="flex justify-between mt-4">
+                    <button
+                      onClick={() => {
+                        setForm(p);
+                        setEditingId(p._id);
+                      }}
+                      className="bg-yellow-400 px-4 py-1 rounded-lg text-sm hover:bg-yellow-500 transition"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => deleteProduct(p._id)}
+                      className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-600 transition"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+
+          </div>
         </div>
 
       </div>
     </div>
-  );
+  </div>
+);
+
 };
 
 export default VendorDashboard;

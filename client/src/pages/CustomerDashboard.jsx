@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
@@ -155,135 +154,180 @@ const CustomerDashboard = () => {
     </div>
   );
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
+return (
+  <div className="min-h-screen bg-gray-100 p-8">
+    <h1 className="text-3xl font-bold mb-10 text-center">
+      🛒 Customer Dashboard
+    </h1>
 
-      <h1 className="text-3xl font-bold mb-8">
-        🛒 Customer Dashboard
-      </h1>
+    {/* ================= CART + WISHLIST GRID ================= */}
+    <div className="grid md:grid-cols-2 gap-8">
 
       {/* CART */}
-      <div className="bg-white p-6 rounded-xl shadow mb-10">
-        <h2 className="text-xl font-bold mb-4">My Cart</h2>
-        {cart.length === 0 && <p>No items in cart</p>}
-        {cart.map(renderItemCard)}
+      <div className="bg-white p-6 rounded-2xl shadow-lg">
+        <h2 className="text-xl font-bold mb-6 border-b pb-3">
+          🛍 My Cart
+        </h2>
+
+        {cart.length === 0 && (
+          <p className="text-gray-500">No items in cart</p>
+        )}
+
+        <div className="space-y-5 max-h-[500px] overflow-y-auto">
+          {cart.map(renderItemCard)}
+        </div>
       </div>
 
       {/* WISHLIST */}
-      <div className="bg-white p-6 rounded-xl shadow mb-10">
-        <h2 className="text-xl font-bold mb-4">My Wishlist</h2>
-        {wishlist.length === 0 && <p>No items in wishlist</p>}
-        {wishlist.map(renderItemCard)}
+      <div className="bg-white p-6 rounded-2xl shadow-lg">
+        <h2 className="text-xl font-bold mb-6 border-b pb-3">
+          ❤️ My Wishlist
+        </h2>
+
+        {wishlist.length === 0 && (
+          <p className="text-gray-500">No items in wishlist</p>
+        )}
+
+        <div className="space-y-5 max-h-[500px] overflow-y-auto">
+          {wishlist.map(renderItemCard)}
+        </div>
       </div>
+    </div>
 
-      {/* MY ORDERS */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-bold mb-4">My Orders</h2>
+    {/* ================= ORDERS ================= */}
+    <div className="bg-white p-8 rounded-2xl shadow-lg mt-12">
+      <h2 className="text-2xl font-bold mb-8 border-b pb-4">
+        📦 My Orders
+      </h2>
 
-        {orders.length === 0 && <p>No orders yet</p>}
+      {orders.length === 0 && (
+        <p className="text-gray-500">No orders yet</p>
+      )}
 
+      <div className="space-y-6">
         {orders.map((order, index) => (
-          <div key={index} className="flex gap-6 border-b py-5">
+          <div
+            key={index}
+            className="flex flex-col md:flex-row gap-6 border rounded-xl p-5 hover:shadow-md transition"
+          >
             <img
               src={order.product.image}
               alt={order.product.title}
-              className="w-28 h-28 object-contain"
+              className="w-32 h-32 object-contain bg-gray-50 rounded-lg"
             />
 
-            <div>
+            <div className="flex-1">
               <h3 className="font-semibold text-lg">
                 {order.product.title}
               </h3>
 
-              <p className="text-red-600 font-bold">
+              <p className="text-red-600 font-bold text-lg">
                 ₹{order.product.price}
               </p>
 
-              <p>Qty: {order.qty}</p>
-              <p>Status: {order.status}</p>
-              <p>Payment: {order.paymentMethod}</p>
+              <div className="mt-2 text-sm text-gray-600 space-y-1">
+                <p>Qty: {order.qty}</p>
+                <p>Payment: {order.paymentMethod}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start md:items-center">
+              <span
+                className={`px-4 py-1 rounded-full text-sm font-semibold
+                ${
+                  order.status === "Delivered"
+                    ? "bg-green-100 text-green-700"
+                    : order.status === "Pending"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}
+              >
+                {order.status}
+              </span>
             </div>
           </div>
         ))}
       </div>
+    </div>
 
-      {/* MODAL */}
-      {showModal && selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
-          <div className="bg-white p-8 rounded-xl w-full max-w-lg">
-            <h2 className="text-2xl font-bold mb-6">
-              Delivery Details
-            </h2>
+    {/* ================= MODAL (UNCHANGED) ================= */}
+    {showModal && selectedItem && (
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+        <div className="bg-white p-8 rounded-xl w-full max-w-lg">
+          <h2 className="text-2xl font-bold mb-6">
+            Delivery Details
+          </h2>
 
-            <div className="space-y-4">
-              <input
-                placeholder="Full Name"
-                className="w-full border p-3 rounded-lg"
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-              />
+          <div className="space-y-4">
+            <input
+              placeholder="Full Name"
+              className="w-full border p-3 rounded-lg"
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+            />
 
-              <input
-                placeholder="Address"
-                className="w-full border p-3 rounded-lg"
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    addressLine: e.target.value,
-                  })
-                }
-              />
+            <input
+              placeholder="Address"
+              className="w-full border p-3 rounded-lg"
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  addressLine: e.target.value,
+                })
+              }
+            />
 
-              <input
-                placeholder="City"
-                className="w-full border p-3 rounded-lg"
-                onChange={(e) =>
-                  setFormData({ ...formData, city: e.target.value })
-                }
-              />
+            <input
+              placeholder="City"
+              className="w-full border p-3 rounded-lg"
+              onChange={(e) =>
+                setFormData({ ...formData, city: e.target.value })
+              }
+            />
 
-              <input
-                placeholder="Pincode"
-                className="w-full border p-3 rounded-lg"
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    pincode: e.target.value,
-                  })
-                }
-              />
+            <input
+              placeholder="Pincode"
+              className="w-full border p-3 rounded-lg"
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  pincode: e.target.value,
+                })
+              }
+            />
 
-              <input
-                placeholder="Phone"
-                className="w-full border p-3 rounded-lg"
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    phone: e.target.value,
-                  })
-                }
-              />
+            <input
+              placeholder="Phone"
+              className="w-full border p-3 rounded-lg"
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  phone: e.target.value,
+                })
+              }
+            />
 
-              <button
-                onClick={placeOrder}
-                className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800"
-              >
-                Confirm & Pay
-              </button>
+            <button
+              onClick={placeOrder}
+              className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800"
+            >
+              Confirm & Pay
+            </button>
 
-              <button
-                onClick={() => setShowModal(false)}
-                className="w-full border py-3 rounded-lg"
-              >
-                Cancel
-              </button>
-            </div>
+            <button
+              onClick={() => setShowModal(false)}
+              className="w-full border py-3 rounded-lg"
+            >
+              Cancel
+            </button>
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
+
 };
 
 export default CustomerDashboard;
