@@ -1,9 +1,10 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { API_URL } from "../config";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
@@ -18,6 +19,11 @@ const PaymentSuccess = () => {
           },
         }
       );
+
+      // 2 sec baad dashboard
+      setTimeout(() => {
+        navigate("/customer-dashboard");
+      }, 2000);
     };
 
     if (sessionId) {
@@ -30,7 +36,7 @@ const PaymentSuccess = () => {
       <h1 className="text-2xl font-bold text-green-600">
         Payment Successful 🎉
       </h1>
-      <p className="mt-2">Your order has been placed successfully.</p>
+      <p className="mt-2">Redirecting to dashboard...</p>
     </div>
   );
 };

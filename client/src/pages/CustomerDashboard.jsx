@@ -16,6 +16,15 @@ const CustomerDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
+  // ✅ SHIPPING FORM STATE
+  const [shipping, setShipping] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    city: "",
+    pincode: "",
+  });
+
   // ================= FETCH DATA =================
   useEffect(() => {
     if (!user) {
@@ -96,40 +105,45 @@ const CustomerDashboard = () => {
     setSelectedItem(item);
     setShowModal(true);
   };
-const placeOrder = async () => {
-  if (!selectedItem) return;
 
-  const res = await fetch(`${API_URL}/api/orders/create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${user.token}`,
-    },
-    body: JSON.stringify({
-      productId: selectedItem.product._id,
-      qty: selectedItem.qty,
-    }),
-  });
+  const placeOrder = async () => {
+    if (!selectedItem) return;
 
-  const data = await res.json();
+    if (
+      !shipping.name ||
+      !shipping.phone ||
+      !shipping.address ||
+      !shipping.city ||
+      !shipping.pincode
+    ) {
+      alert("Please fill all shipping details");
+      return;
+    }
 
-  if (res.ok) {
-    alert("Order Placed Successfully!");
+    const res = await fetch(
+      `${API_URL}/api/orders/create-checkout-session`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          productId: selectedItem.product._id,
+          qty: selectedItem.qty,
+          shippingAddress: shipping,
+        }),
+      }
+    );
 
-    // refresh orders
-    const orderRes = await fetch(`${API_URL}/api/orders/my-orders`, {
-      headers: { Authorization: `Bearer ${user.token}` },
-    });
+    const data = await res.json();
 
-    const orderData = await orderRes.json();
-    setOrders(orderData);
-
-    setShowModal(false);
-  } else {
-    alert(data.message);
-  }
-};
-
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert("Payment session failed");
+    }
+  };
 
   // ================= FILTER =================
   const filteredCart = cart.filter(
@@ -166,10 +180,14 @@ const placeOrder = async () => {
         alt={item.product.title}
         className="w-full h-32 object-contain"
       />
+
       <h3 className="font-semibold mt-2 line-clamp-1">
         {item.product.title}
       </h3>
-      <p className="text-red-600 font-bold">₹{item.product.price}</p>
+
+      <p className="text-red-600 font-bold">
+        ₹{item.product.price}
+      </p>
 
       <button
         onClick={(e) => {
@@ -219,7 +237,11 @@ const placeOrder = async () => {
           >
             ⬅ Back
           </button>
-          <h1 className="text-3xl font-bold">Customer Dashboard</h1>
+
+          <h1 className="text-3xl font-bold">
+            Customer Dashboard
+          </h1>
+
           <div />
         </div>
 
@@ -245,6 +267,7 @@ const placeOrder = async () => {
           <div className="bg-white p-6 rounded shadow">
             <div className="flex justify-between mb-4">
               <h2 className="font-bold text-xl">My Cart</h2>
+
               {cart.length > 0 && (
                 <button
                   onClick={clearCart}
@@ -266,6 +289,7 @@ const placeOrder = async () => {
           <div className="bg-white p-6 rounded shadow">
             <div className="flex justify-between mb-4">
               <h2 className="font-bold text-xl">My Wishlist</h2>
+
               {wishlist.length > 0 && (
                 <button
                   onClick={clearWishlist}
@@ -283,53 +307,106 @@ const placeOrder = async () => {
         )}
 
         {/* ORDERS */}
-      {activeTab === "orders" && (
-  <div className="bg-white p-6 rounded shadow">
-    <h2 className="font-bold text-xl mb-6">My Orders</h2>
+        {activeTab === "orders" && (
+          <div className="bg-white p-6 rounded shadow">
+            <h2 className="font-bold text-xl mb-6">My Orders</h2>
 
-    {orders.length === 0 && (
-      <p className="text-gray-500">No orders yet</p>
-    )}
+            {orders.length === 0 && (
+              <p className="text-gray-500">No orders yet</p>
+            )}
 
-    {orders.map((order) => (
-      <div
-        key={order._id}
-        className="flex gap-6 border p-4 rounded-lg mb-4 hover:shadow"
-      >
-        <img
-          src={order.product?.image}
-          alt={order.product?.title}
-          className="w-28 h-28 object-contain bg-gray-50 rounded"
-        />
+            {orders.map((order) => (
+              <div
+                key={order._id}
+                className="flex gap-6 border p-4 rounded-lg mb-4"
+              >
+                <img
+                  src={order.product?.image}
+                  alt={order.product?.title}
+                  className="w-28 h-28 object-contain bg-gray-50 rounded"
+                />
 
-        <div className="flex-1">
-          <h3 className="font-semibold text-lg">
-            {order.product?.title}
-          </h3>
+                <div>
+                  <h3 className="font-semibold">
+                    {order.product?.title}
+                  </h3>
 
-          <p className="text-red-600 font-bold">
-            ₹{order.product?.price}
-          </p>
+                  <p className="text-red-600 font-bold">
+                    ₹{order.product?.price}
+                  </p>
 
-          <p className="text-sm text-gray-600 mt-1">
-            Qty: {order.qty}
-          </p>
+                  <p>Qty: {order.qty}</p>
+                  <p>Status: {order.status}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-          <p className="text-sm mt-2">
-            Status:{" "}
-            <span className="text-green-600 font-semibold">
-              {order.status}
-            </span>
-          </p>
+        {/* SHIPPING MODAL */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+            <div className="bg-white p-6 rounded w-96">
+              <h2 className="text-lg font-bold mb-4">
+                Shipping Details
+              </h2>
 
-          <p className="text-xs text-gray-400 mt-1">
-            Ordered on {new Date(order.createdAt).toLocaleDateString()}
-          </p>
-        </div>
-      </div>
-    ))}
-  </div>
-)}
+              <input
+                placeholder="Full Name"
+                className="w-full border p-2 mb-2 rounded"
+                onChange={(e) =>
+                  setShipping({ ...shipping, name: e.target.value })
+                }
+              />
+
+              <input
+                placeholder="Phone"
+                className="w-full border p-2 mb-2 rounded"
+                onChange={(e) =>
+                  setShipping({ ...shipping, phone: e.target.value })
+                }
+              />
+
+              <input
+                placeholder="Address"
+                className="w-full border p-2 mb-2 rounded"
+                onChange={(e) =>
+                  setShipping({ ...shipping, address: e.target.value })
+                }
+              />
+
+              <input
+                placeholder="City"
+                className="w-full border p-2 mb-2 rounded"
+                onChange={(e) =>
+                  setShipping({ ...shipping, city: e.target.value })
+                }
+              />
+
+              <input
+                placeholder="Pincode"
+                className="w-full border p-2 mb-3 rounded"
+                onChange={(e) =>
+                  setShipping({ ...shipping, pincode: e.target.value })
+                }
+              />
+
+              <button
+                onClick={placeOrder}
+                className="w-full bg-green-600 text-white py-2 rounded"
+              >
+                Proceed to Payment
+              </button>
+
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full mt-2 bg-gray-400 text-white py-2 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
