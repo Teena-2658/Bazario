@@ -166,37 +166,62 @@ const CustomerDashboard = () => {
   // =============================
   // Shared Item Card
   // =============================
-  const renderItemCard = (item, type) => (
-    <div className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition w-full relative flex flex-col justify-between">
-      <img
-        src={item.product.image}
-        alt={item.product.title}
-        className="w-full h-32 object-contain mb-2"
-      />
-      <h3 className="font-semibold text-md line-clamp-1">{item.product.title}</h3>
-      <p className="text-red-600 font-bold mt-1">₹{item.product.price}</p>
-      {item.qty && <p className="text-sm text-gray-500 mt-1">Qty: {item.qty}</p>}
+ // =============================
+// Shared Item Card (clickable)
+// =============================
+const renderItemCard = (item, index) => (
+  <div
+    key={index}
+    className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition w-full cursor-pointer"
+    onClick={() => navigate(`/product/${item.product._id}?from=dashboard`)}
+  >
+    <img
+      src={item.product.image}
+      alt={item.product.title}
+      className="w-full h-32 object-contain mb-2"
+    />
+    <h3 className="font-semibold text-md line-clamp-1">{item.product.title}</h3>
+    <p className="text-red-600 font-bold mt-1">₹{item.product.price}</p>
+    {item.qty && <p className="text-sm text-gray-500 mt-1">Qty: {item.qty}</p>}
 
-      <div className="mt-3 flex gap-2">
-        {type === "cart" && (
-          <button
-            onClick={() => handleBuy(item)}
-            className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-          >
-            Buy Now
-          </button>
-        )}
-        <button
-          onClick={() =>
-            type === "cart" ? removeCartItem(item.product._id) : removeWishlistItem(item.product._id)
-          }
-          className="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600"
-        >
-          Remove
-        </button>
-      </div>
-    </div>
-  );
+    {/* Buy button (works for dashboard too) */}
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        handleBuy(item); // ✅ opens Stripe modal
+      }}
+      className="mt-2 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+    >
+      Buy Now
+    </button>
+
+    {/* Remove buttons */}
+    {activeTab === "cart" && (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleRemoveCartItem(item._id);
+        }}
+        className="mt-2 w-full bg-red-500 text-white py-1 rounded-lg hover:bg-red-600 text-sm"
+      >
+        Remove
+      </button>
+    )}
+
+    {activeTab === "wishlist" && (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleRemoveWishlistItem(item.product._id);
+        }}
+        className="mt-2 w-full bg-red-500 text-white py-1 rounded-lg hover:bg-red-600 text-sm"
+      >
+        Remove
+      </button>
+    )}
+  </div>
+);
+
 
   // =============================
   // Filtered Items

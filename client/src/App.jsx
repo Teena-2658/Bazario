@@ -11,6 +11,7 @@ import CustomerDashboard from "./pages/CustomerDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import CategoryProducts from "./pages/CategoryProducts";
 function App() {
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -25,7 +26,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
-
+    <Route path="/category/:category" element={<CategoryProducts />} />
         <Route
           path="/vendor-dashboard"
           element={

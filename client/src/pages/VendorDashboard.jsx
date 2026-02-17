@@ -157,16 +157,25 @@ const VendorDashboard = () => {
                   required
                 />
 
-                <input
-                  type="text"
-                  placeholder="Category"
-                  className="w-full border p-3 rounded-lg"
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm({ ...form, category: e.target.value })
-                  }
-                  required
-                />
+               <select
+  className="w-full border p-3 rounded-lg"
+  value={form.category}
+  onChange={(e) =>
+    setForm({ ...form, category: e.target.value })
+  }
+  required
+>
+  <option value="">Select Category</option>
+  <option value="mobiles">Mobiles</option>
+  <option value="fashion">Fashion</option>
+  <option value="electronics">Electronics</option>
+  <option value="home">Home</option>
+  <option value="sports">Sports</option>
+  <option value="furniture">Furniture</option>
+  <option value="travel">Travel</option>
+  <option value="utensils">Utensils</option>
+</select>
+
 
                 <select
                   className="w-full border p-3 rounded-lg"
