@@ -16,18 +16,7 @@ const CustomerDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    addressLine: "",
-    city: "",
-    pincode: "",
-    phone: "",
-    paymentMethod: "Stripe",
-  });
-
-  // =============================
-  // Fetch Data
-  // =============================
+  // ================= FETCH DATA =================
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -36,378 +25,312 @@ const CustomerDashboard = () => {
 
     const fetchData = async () => {
       try {
-        // Fetch Cart
         const cartRes = await fetch(`${API_URL}/api/user/cart`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const cartData = await cartRes.json();
         setCart(cartData.reverse());
 
-        // Fetch Wishlist
         const wishRes = await fetch(`${API_URL}/api/user/wishlist`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const wishData = await wishRes.json();
-        const formattedWishlist = wishData
-          .map((item) => ({ product: item, qty: 1 }))
-          .reverse();
-        setWishlist(formattedWishlist);
+        setWishlist(
+          wishData.map((item) => ({ product: item, qty: 1 })).reverse()
+        );
 
-        // Fetch Orders
         const orderRes = await fetch(`${API_URL}/api/orders/my-orders`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const orderData = await orderRes.json();
         setOrders(orderData.reverse());
-      } catch (error) {
-        console.log("Fetch error:", error);
+      } catch (err) {
+        console.log(err);
       }
     };
 
     fetchData();
   }, []);
 
-  // =============================
-  // Buy
-  // =============================
+  // ================= REMOVE =================
+  const removeCartItem = async (productId) => {
+    await fetch(`${API_URL}/api/user/cart/${productId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+
+    setCart((prev) =>
+      prev.filter((item) => item.product?._id !== productId)
+    );
+  };
+
+  const removeWishlistItem = async (productId) => {
+    await fetch(`${API_URL}/api/user/wishlist/${productId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+
+    setWishlist((prev) =>
+      prev.filter((item) => item.product?._id !== productId)
+    );
+  };
+
+  const clearCart = async () => {
+    await fetch(`${API_URL}/api/user/cart-clear`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+    setCart([]);
+  };
+
+  const clearWishlist = async () => {
+    await fetch(`${API_URL}/api/user/wishlist-clear`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+    setWishlist([]);
+  };
+
+  // ================= BUY =================
   const handleBuy = (item) => {
     setSelectedItem(item);
     setShowModal(true);
   };
+const placeOrder = async () => {
+  if (!selectedItem) return;
 
-  const placeOrder = async () => {
-    try {
-      if (!selectedItem) return;
+  const res = await fetch(`${API_URL}/api/orders/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${user.token}`,
+    },
+    body: JSON.stringify({
+      productId: selectedItem.product._id,
+      qty: selectedItem.qty,
+    }),
+  });
 
-      const res = await fetch(
-        `${API_URL}/api/orders/create-checkout-session`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-          body: JSON.stringify({
-            productId: selectedItem.product._id,
-            qty: selectedItem.qty,
-          }),
-        }
-      );
+  const data = await res.json();
 
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else alert("Stripe session URL not received");
-    } catch (error) {
-      console.log("Payment error:", error);
-    }
-  };
+  if (res.ok) {
+    alert("Order Placed Successfully!");
 
-  // =============================
-  // Remove / Clear Functions
-  // =============================
-  const removeCartItem = async (productId) => {
-    try {
-      const res = await fetch(`${API_URL}/api/user/cart/${productId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      if (res.ok)
-        setCart((prev) => prev.filter((item) => item.product._id !== productId));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    // refresh orders
+    const orderRes = await fetch(`${API_URL}/api/orders/my-orders`, {
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
 
-  const clearCart = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/user/cart-clear`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      if (res.ok) setCart([]);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    const orderData = await orderRes.json();
+    setOrders(orderData);
 
-  const removeWishlistItem = async (productId) => {
-    try {
-      const res = await fetch(`${API_URL}/api/user/wishlist/${productId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      if (res.ok)
-        setWishlist((prev) => prev.filter((item) => item.product._id !== productId));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    setShowModal(false);
+  } else {
+    alert(data.message);
+  }
+};
 
-  const clearWishlist = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/user/wishlist-clear`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      if (res.ok) setWishlist([]);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
-  // =============================
-  // Tab Classes Helper
-  // =============================
+  // ================= FILTER =================
+  const filteredCart = cart.filter(
+    (item) =>
+      item?.product?.title &&
+      item.product.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+  );
+
+  const filteredWishlist = wishlist.filter(
+    (item) =>
+      item?.product?.title &&
+      item.product.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+  );
+
   const tabClass = (tab) =>
     `px-6 py-2 rounded-full font-semibold ${
       activeTab === tab ? "bg-black text-white" : "bg-white shadow"
     }`;
 
-  // =============================
-  // Shared Item Card
-  // =============================
- // =============================
-// Shared Item Card (clickable)
-// =============================
-const renderItemCard = (item, index) => (
-  <div
-    key={index}
-    className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition w-full cursor-pointer"
-    onClick={() => navigate(`/product/${item.product._id}?from=dashboard`)}
-  >
-    <img
-      src={item.product.image}
-      alt={item.product.title}
-      className="w-full h-32 object-contain mb-2"
-    />
-    <h3 className="font-semibold text-md line-clamp-1">{item.product.title}</h3>
-    <p className="text-red-600 font-bold mt-1">₹{item.product.price}</p>
-    {item.qty && <p className="text-sm text-gray-500 mt-1">Qty: {item.qty}</p>}
-
-    {/* Buy button (works for dashboard too) */}
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        handleBuy(item); // ✅ opens Stripe modal
-      }}
-      className="mt-2 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+  // ================= ITEM CARD =================
+  const renderItemCard = (item) => (
+    <div
+      className="bg-white border rounded-lg p-3 shadow hover:shadow-md cursor-pointer"
+      onClick={() =>
+        navigate(`/product/${item.product._id}?from=dashboard`)
+      }
     >
-      Buy Now
-    </button>
+      <img
+        src={item.product.image}
+        alt={item.product.title}
+        className="w-full h-32 object-contain"
+      />
+      <h3 className="font-semibold mt-2 line-clamp-1">
+        {item.product.title}
+      </h3>
+      <p className="text-red-600 font-bold">₹{item.product.price}</p>
 
-    {/* Remove buttons */}
-    {activeTab === "cart" && (
       <button
         onClick={(e) => {
           e.stopPropagation();
-          handleRemoveCartItem(item._id);
+          handleBuy(item);
         }}
-        className="mt-2 w-full bg-red-500 text-white py-1 rounded-lg hover:bg-red-600 text-sm"
+        className="w-full mt-2 bg-green-600 text-white py-2 rounded"
       >
-        Remove
+        Buy Now
       </button>
-    )}
 
-    {activeTab === "wishlist" && (
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleRemoveWishlistItem(item.product._id);
-        }}
-        className="mt-2 w-full bg-red-500 text-white py-1 rounded-lg hover:bg-red-600 text-sm"
-      >
-        Remove
-      </button>
-    )}
-  </div>
-);
+      {activeTab === "cart" && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            removeCartItem(item.product._id);
+          }}
+          className="w-full mt-2 bg-red-500 text-white py-1 rounded"
+        >
+          Remove
+        </button>
+      )}
 
-
-  // =============================
-  // Filtered Items
-  // =============================
-  const filteredCart = cart.filter((item) =>
-    item.product.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredWishlist = wishlist.filter((item) =>
-    item.product.title.toLowerCase().includes(searchQuery.toLowerCase())
+      {activeTab === "wishlist" && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            removeWishlistItem(item.product._id);
+          }}
+          className="w-full mt-2 bg-red-500 text-white py-1 rounded"
+        >
+          Remove
+        </button>
+      )}
+    </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center p-8">
-      <div className="w-full max-w-6xl">
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-6xl mx-auto">
+
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-10">
+        <div className="flex justify-between items-center mb-8">
           <button
             onClick={() => navigate("/")}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-blue-500 text-white px-4 py-2 rounded"
           >
-            ⬅ Back to Home
+            ⬅ Back
           </button>
-          <h1 className="text-3xl font-bold flex-1 text-center -translate-x-2">
-            🛒 Customer Dashboard
-          </h1>
-          <div></div>
+          <h1 className="text-3xl font-bold">Customer Dashboard</h1>
+          <div />
         </div>
 
         {/* TABS */}
-        <div className="flex justify-center gap-6 mb-10">
-          <button onClick={() => setActiveTab("cart")} className={tabClass("cart")}>
-            🛍 Cart
-          </button>
-          <button onClick={() => setActiveTab("wishlist")} className={tabClass("wishlist")}>
-            ❤️ Wishlist
-          </button>
-          <button onClick={() => setActiveTab("orders")} className={tabClass("orders")}>
-            📦 Orders
-          </button>
+        <div className="flex justify-center gap-4 mb-6">
+          <button onClick={() => setActiveTab("cart")} className={tabClass("cart")}>Cart</button>
+          <button onClick={() => setActiveTab("wishlist")} className={tabClass("wishlist")}>Wishlist</button>
+          <button onClick={() => setActiveTab("orders")} className={tabClass("orders")}>Orders</button>
         </div>
 
-        {/* SEARCH INPUT */}
+        {/* SEARCH */}
         {(activeTab === "cart" || activeTab === "wishlist") && (
           <input
-            type="text"
+            className="w-full border p-3 rounded mb-4"
             placeholder="Search items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full border p-3 rounded-lg mb-4"
           />
         )}
 
-        {/* CART TAB */}
+        {/* CART */}
         {activeTab === "cart" && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">🛍 My Cart</h2>
+          <div className="bg-white p-6 rounded shadow">
+            <div className="flex justify-between mb-4">
+              <h2 className="font-bold text-xl">My Cart</h2>
               {cart.length > 0 && (
                 <button
                   onClick={clearCart}
-                  className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600"
+                  className="bg-red-500 text-white px-3 py-1 rounded"
                 >
                   Clear All
                 </button>
               )}
             </div>
-            {filteredCart.length === 0 && <p className="text-gray-500">No items found</p>}
-            <div className="grid sm:grid-cols-2 gap-6 max-h-[600px] overflow-y-auto justify-items-center">
-              {filteredCart.map((item) => renderItemCard(item, "cart"))}
+
+            <div className="grid grid-cols-2 gap-6">
+              {filteredCart.map(renderItemCard)}
             </div>
           </div>
         )}
 
-        {/* WISHLIST TAB */}
+        {/* WISHLIST */}
         {activeTab === "wishlist" && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">❤️ My Wishlist</h2>
+          <div className="bg-white p-6 rounded shadow">
+            <div className="flex justify-between mb-4">
+              <h2 className="font-bold text-xl">My Wishlist</h2>
               {wishlist.length > 0 && (
                 <button
                   onClick={clearWishlist}
-                  className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600"
+                  className="bg-red-500 text-white px-3 py-1 rounded"
                 >
                   Clear All
                 </button>
               )}
             </div>
-            {filteredWishlist.length === 0 && <p className="text-gray-500">No items found</p>}
-            <div className="grid sm:grid-cols-2 gap-6 max-h-[600px] overflow-y-auto justify-items-center">
-              {filteredWishlist.map((item) => renderItemCard(item, "wishlist"))}
+
+            <div className="grid grid-cols-2 gap-6">
+              {filteredWishlist.map(renderItemCard)}
             </div>
           </div>
         )}
 
-        {/* ORDERS TAB */}
-        {activeTab === "orders" && (
-          <div className="bg-white p-8 rounded-2xl shadow-lg">
-            <h2 className="text-2xl font-bold mb-8 border-b pb-4">📦 My Orders</h2>
-            {orders.length === 0 && <p className="text-gray-500">No orders yet</p>}
+        {/* ORDERS */}
+      {activeTab === "orders" && (
+  <div className="bg-white p-6 rounded shadow">
+    <h2 className="font-bold text-xl mb-6">My Orders</h2>
 
-            <div className="space-y-6">
-              {orders.map((order, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col md:flex-row gap-6 border rounded-xl p-5 hover:shadow-md transition"
-                >
-                  <img
-                    src={order.product.image}
-                    alt={order.product.title}
-                    className="w-32 h-32 object-contain bg-gray-50 rounded-lg"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{order.product.title}</h3>
-                    <p className="text-red-600 font-bold text-lg">₹{order.product.price}</p>
-                    <div className="mt-2 text-sm text-gray-600 space-y-1">
-                      <p>Qty: {order.qty}</p>
-                      <p>Payment: {order.paymentMethod}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start md:items-center">
-                    <span
-                      className={`px-4 py-1 rounded-full text-sm font-semibold ${
-                        order.status === "Delivered"
-                          ? "bg-green-100 text-green-700"
-                          : order.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-blue-100 text-blue-700"
-                      }`}
-                    >
-                      {order.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+    {orders.length === 0 && (
+      <p className="text-gray-500">No orders yet</p>
+    )}
 
-        {/* MODAL */}
-        {showModal && selectedItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
-            <div className="bg-white p-8 rounded-xl w-full max-w-lg">
-              <h2 className="text-2xl font-bold mb-6">Delivery Details</h2>
-              <div className="space-y-4">
-                <input
-                  placeholder="Full Name"
-                  className="w-full border p-3 rounded-lg"
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-                <input
-                  placeholder="Address"
-                  className="w-full border p-3 rounded-lg"
-                  onChange={(e) => setFormData({ ...formData, addressLine: e.target.value })}
-                />
-                <input
-                  placeholder="City"
-                  className="w-full border p-3 rounded-lg"
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                />
-                <input
-                  placeholder="Pincode"
-                  className="w-full border p-3 rounded-lg"
-                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                />
-                <input
-                  placeholder="Phone"
-                  className="w-full border p-3 rounded-lg"
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-                <button
-                  onClick={placeOrder}
-                  className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800"
-                >
-                  Confirm & Pay
-                </button>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="w-full border py-3 rounded-lg"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+    {orders.map((order) => (
+      <div
+        key={order._id}
+        className="flex gap-6 border p-4 rounded-lg mb-4 hover:shadow"
+      >
+        <img
+          src={order.product?.image}
+          alt={order.product?.title}
+          className="w-28 h-28 object-contain bg-gray-50 rounded"
+        />
+
+        <div className="flex-1">
+          <h3 className="font-semibold text-lg">
+            {order.product?.title}
+          </h3>
+
+          <p className="text-red-600 font-bold">
+            ₹{order.product?.price}
+          </p>
+
+          <p className="text-sm text-gray-600 mt-1">
+            Qty: {order.qty}
+          </p>
+
+          <p className="text-sm mt-2">
+            Status:{" "}
+            <span className="text-green-600 font-semibold">
+              {order.status}
+            </span>
+          </p>
+
+          <p className="text-xs text-gray-400 mt-1">
+            Ordered on {new Date(order.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
       </div>
     </div>
   );

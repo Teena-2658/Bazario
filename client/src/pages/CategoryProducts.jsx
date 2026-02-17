@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 
@@ -6,6 +6,8 @@ const API_URL = "https://bazario-eg4p.onrender.com";
 
 const CategoryProducts = () => {
   const { category } = useParams();
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
@@ -16,6 +18,15 @@ const CategoryProducts = () => {
 
   return (
     <div className="max-w-[1400px] mx-auto p-4">
+
+      {/* ✅ BACK BUTTON */}
+      <button
+        onClick={() => navigate(-1)}
+        className="mb-4 flex items-center gap-2 text-blue-600 font-medium"
+      >
+        ← Back
+      </button>
+
       <h2 className="text-2xl font-bold mb-6 capitalize">
         {category} Products
       </h2>

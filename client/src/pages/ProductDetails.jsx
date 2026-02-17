@@ -137,12 +137,7 @@ const ProductDetails = () => {
                   >
                     Add to Cart
                   </button>
-                  <button
-                    onClick={() => navigate("/wishlist")}
-                    className="border px-8 py-3 rounded-lg"
-                  >
-                    Wishlist
-                  </button>
+                  
                 </div>
               </>
             )}
