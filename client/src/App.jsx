@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
@@ -8,13 +9,15 @@ import ProductDetails from "./pages/ProductDetails";
 import VendorDashboard from "./pages/VendorDashboard";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 function App() {
 
   const user = JSON.parse(localStorage.getItem("user"));
 
   return (
     <BrowserRouter>
+      <Navbar /> 
       <Routes>
 
         <Route path="/" element={<Home />} />
@@ -42,6 +45,18 @@ function App() {
         />
 
       </Routes>
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3000} 
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+        <Footer />
     </BrowserRouter>
   );
 }

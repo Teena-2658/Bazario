@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { API_URL } from "../config";
+import { useNavigate } from "react-router-dom"; // ✅ added
 
 const VendorDashboard = () => {
+
+  const navigate = useNavigate(); // ✅ added
 
   const user = JSON.parse(localStorage.getItem("user"));
   const vendorId = user?._id;
@@ -100,14 +103,24 @@ const VendorDashboard = () => {
 
         {/* HEADER */}
         <div className="flex justify-between items-center mb-8">
+
+          {/* ✅ Back Button Added */}
+          <button
+            onClick={() => navigate("/")}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            ⬅ Back to Home
+          </button>
+
           <h1 className="text-3xl font-bold">
             🏪 Vendor Dashboard
           </h1>
 
           <div className="bg-white px-5 py-2 rounded-xl shadow text-sm">
-            Total Products: 
+            Total Products:
             <span className="font-semibold"> {products.length}</span>
           </div>
+
         </div>
 
         {/* MAIN GRID */}
