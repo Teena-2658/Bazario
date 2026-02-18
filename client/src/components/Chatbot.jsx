@@ -9,39 +9,75 @@ const Chatbot = () => {
   const [input, setInput] = useState("");
   const [voiceOn, setVoiceOn] = useState(false);
   const [typing, setTyping] = useState(false);
-  const [messages, setMessages] = useState([]);
   const [productResults, setProductResults] = useState([]);
 
+  const chatBodyRef = useRef(null);
   const chatEndRef = useRef(null);
 
   /* ===============================
-     AUTO SCROLL
+     DEFAULT BOT MESSAGE (GUIDE)
   =============================== */
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, productResults]);
+const [messages, setMessages] = useState([
+  {
+    role: "bot",
+    message: `Hi 👋 I am Bazario Assistant.
+
+You can ask me things like:
+
+🛒 Product Queries:
+• price of iPhone
+• description of shoes
+• show electronics category
+• fashion products
+
+🔥 Section Queries:
+• show trending products
+• show spotlight products
+• show in demand products
+• show everyday products
+
+💡 Tip: Use simple words like product name, category or section.`,
+  },
+]);
+
 
   /* ===============================
-     LOAD CHAT HISTORY
+     AUTO SCROLL (ONLY IF USER AT BOTTOM)
+  =============================== */
+  const scrollToBottom = () => {
+    const container = chatBodyRef.current;
+    if (!container) return;
+
+    const isNearBottom =
+      container.scrollHeight -
+        container.scrollTop -
+        container.clientHeight <
+      80;
+
+    if (isNearBottom) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, typing]);
+
+  /* ===============================
+     LOAD CHAT HISTORY (USER WISE)
   =============================== */
   useEffect(() => {
     if (!user) return;
 
     const loadChat = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/chat/${user._id}`);
+        const res = await fetch(
+          `${API_URL}/api/chat/${user._id}`
+        );
         const data = await res.json();
 
         if (data.length > 0) {
           setMessages(data);
-        } else {
-          setMessages([
-            {
-              role: "bot",
-              message:
-                "Hi 👋 I am Bazario Assistant. Ask me about products, price or category.",
-            },
-          ]);
         }
       } catch (err) {
         console.log("Chat load error");
@@ -90,12 +126,11 @@ const Chatbot = () => {
 
     const userText = input;
 
-    const userMsg = {
-      role: "user",
-      message: userText,
-    };
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", message: userText },
+    ]);
 
-    setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setTyping(true);
 
@@ -114,15 +149,18 @@ const Chatbot = () => {
       const data = await res.json();
 
       setTimeout(() => {
-        const botMsg = {
-          role: "bot",
-          message: data.reply,
-        };
+        setMessages((prev) => [
+          ...prev,
+          { role: "bot", message: data.reply },
+        ]);
 
-        setMessages((prev) => [...prev, botMsg]);
-        setProductResults(data.products || []);
+        if (data.products?.length > 0) {
+          setProductResults(data.products);
+        } else {
+          setProductResults([]);
+        }
+
         setTyping(false);
-
         speak(data.reply);
       }, 500);
     } catch (err) {
@@ -136,46 +174,57 @@ const Chatbot = () => {
       {/* FLOAT BUTTON */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-xl hover:scale-110 transition z-50"
+        className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all duration-300 z-50"
       >
         {open ? <FiX size={22} /> : <FiMessageCircle size={22} />}
       </button>
 
       {/* CHAT WINDOW */}
       <div
-        className={`fixed bottom-24 right-6 w-96 h-[520px] bg-white shadow-2xl rounded-2xl flex flex-col overflow-hidden transition-all duration-300 z-50 ${
-          open ? "scale-100 opacity-100" : "scale-90 opacity-0 pointer-events-none"
+        className={`fixed bottom-24 right-6 w-96 h-[520px] bg-white shadow-2xl rounded-2xl flex flex-col overflow-hidden transition-all duration-500 z-50 ${
+          open
+            ? "scale-100 opacity-100"
+            : "scale-90 opacity-0 pointer-events-none"
         }`}
       >
         {/* HEADER */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 flex justify-between">
           <div>
-            <h2 className="font-semibold">Bazario Assistant</h2>
-            <p className="text-xs opacity-80">Product Support Bot</p>
+            <h2 className="font-semibold text-lg">
+              Bazario Assistant
+            </h2>
+            <p className="text-xs opacity-80">
+              Ask about products & categories
+            </p>
           </div>
 
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-2">
             <button onClick={() => setVoiceOn(!voiceOn)}>
               {voiceOn ? "🔊" : "🔇"}
             </button>
-            <FiX onClick={() => setOpen(false)} className="cursor-pointer" />
+            <FiX onClick={() => setOpen(false)} />
           </div>
         </div>
 
         {/* CHAT BODY */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+        <div
+          ref={chatBodyRef}
+          className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50"
+        >
           {messages.map((msg, i) => (
             <div
               key={i}
               className={`flex ${
-                msg.role === "user" ? "justify-end" : "justify-start"
+                msg.role === "user"
+                  ? "justify-end"
+                  : "justify-start"
               }`}
             >
               <div
-                className={`px-4 py-2 rounded-2xl text-sm shadow max-w-xs ${
+                className={`px-4 py-2 rounded-2xl max-w-xs text-sm shadow ${
                   msg.role === "user"
-                    ? "bg-blue-600 text-white rounded-br-none"
-                    : "bg-white text-gray-800 rounded-bl-none"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-800"
                 }`}
               >
                 {msg.message}
@@ -184,49 +233,52 @@ const Chatbot = () => {
           ))}
 
           {typing && (
-            <div className="bg-white px-4 py-2 rounded-xl text-sm shadow w-fit">
+            <div className="bg-white px-4 py-2 rounded-2xl shadow text-sm animate-pulse">
               Typing...
-            </div>
-          )}
-
-          {/* PRODUCT RESULTS */}
-          {productResults.length > 0 && (
-            <div className="grid gap-3 mt-2">
-              {productResults.map((product) => (
-                <div
-                  key={product._id}
-                  onClick={() =>
-                    (window.location.href = `/product/${product._id}`)
-                  }
-                  className="bg-white p-3 rounded-xl shadow hover:shadow-lg cursor-pointer transition"
-                >
-                  <img
-                    src={product.image}
-                    alt={product.title}
-                    className="h-32 w-full object-cover rounded-md"
-                  />
-                  <h3 className="font-semibold text-sm mt-2">
-                    {product.title}
-                  </h3>
-                  <p className="text-blue-600 font-bold">
-                    ₹{product.price}
-                  </p>
-                </div>
-              ))}
             </div>
           )}
 
           <div ref={chatEndRef} />
         </div>
 
+        {/* PRODUCT RESULTS */}
+        {productResults.length > 0 && (
+          <div className="max-h-48 overflow-y-auto border-t p-2 bg-white space-y-2">
+            {productResults.map((product) => (
+              <div
+                key={product._id}
+                onClick={() =>
+                  (window.location.href = `/product/${product._id}`)
+                }
+                className="flex gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+              >
+                <img
+                  src={product.image}
+                  className="w-16 h-16 object-cover rounded"
+                />
+                <div>
+                  <p className="text-sm font-semibold">
+                    {product.title}
+                  </p>
+                  <p className="text-blue-600 font-bold">
+                    ₹{product.price}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* INPUT */}
-        <div className="p-3 border-t flex gap-2 bg-white">
+        <div className="p-3 border-t flex gap-2">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Ask about products..."
-            className="flex-1 border rounded-full px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400"
+            onKeyDown={(e) =>
+              e.key === "Enter" && sendMessage()
+            }
+            placeholder="Ask something..."
+            className="flex-1 px-3 py-2 border rounded-full"
           />
 
           <button
