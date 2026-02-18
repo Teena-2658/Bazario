@@ -1,27 +1,22 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
+const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/* =================================
-   AI FUNCTION (INTENT DETECTION)
-================================= */
-
 export const askAI = async (message) => {
   try {
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
           content: `
-You are an ecommerce AI assistant.
+You are an ecommerce assistant.
 
-Your job is to detect user intent from message.
+Extract intent from user message.
 
-Return ONLY JSON in this format:
-
+Return ONLY valid JSON like:
 {
   "intent": "",
   "category": "",
@@ -30,19 +25,13 @@ Return ONLY JSON in this format:
   "maxPrice": ""
 }
 
-intent can be:
+intent values:
 price_query
 description_query
 category_search
 section_search
 product_search
-
-Rules:
-- Understand wrong spelling
-- Ignore uppercase/lowercase
-- Understand casual language
-- If unsure, return product_search
-          `,
+`,
         },
         {
           role: "user",
@@ -52,16 +41,11 @@ Rules:
       temperature: 0,
     });
 
-    return response.choices[0].message.content;
+    const text = response.choices[0].message.content;
 
-  } catch (error) {
-    console.log("AI Error:", error);
-    return JSON.stringify({
-      intent: "product_search",
-      category: "",
-      section: "",
-      productName: message,
-      maxPrice: "",
-    });
+    return JSON.parse(text);
+  } catch (err) {
+    console.log("AI ERROR:", err);
+    return null;
   }
 };

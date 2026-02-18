@@ -3,7 +3,6 @@ import Chat from "../models/Chat.js";
 import Product from "../models/Product.js";
 import { askAI } from "../utils/ai.js";
 
-
 const router = express.Router();
 
 /* ===============================
@@ -22,7 +21,7 @@ router.get("/:userId", async (req, res) => {
 });
 
 /* ===============================
-   SEND MESSAGE (AI LOGIC)
+   SEND MESSAGE
 ================================ */
 router.post("/send", async (req, res) => {
   const { userId, message } = req.body;
@@ -34,50 +33,17 @@ router.post("/send", async (req, res) => {
   let products = [];
 
   try {
-    /* ===============================
-       AI INTENT DETECTION
-    ================================ */
+    /* ===== AI INTENT ===== */
+    const intentData = await askAI(message);
 
-    const aiResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `
-You are an ecommerce assistant.
-Extract intent from user message.
+    if (!intentData) {
+      return res.json({
+        reply: "Please try again.",
+        products: [],
+      });
+    }
 
-Return JSON only like:
-{
- intent: "",
- category: "",
- section: "",
- productName: "",
- maxPrice: ""
-}
-
-intent values:
-price_query
-description_query
-category_search
-section_search
-product_search
-        `,
-        },
-        {
-          role: "user",
-          content: message,
-        },
-      ],
-    });
-
-    const aiText = aiResponse.choices[0].message.content;
-    const intentData = JSON.parse(aiText);
-
-    /* ===============================
-       DATABASE SEARCH
-    ================================ */
-
+    /* ===== PRICE QUERY ===== */
     if (intentData.intent === "price_query") {
       const product = await Product.findOne({
         title: { $regex: intentData.productName, $options: "i" },
@@ -89,6 +55,7 @@ product_search
       }
     }
 
+    /* ===== DESCRIPTION ===== */
     else if (intentData.intent === "description_query") {
       const product = await Product.findOne({
         title: { $regex: intentData.productName, $options: "i" },
@@ -100,22 +67,25 @@ product_search
       }
     }
 
+    /* ===== CATEGORY ===== */
     else if (intentData.intent === "category_search") {
       products = await Product.find({
         category: { $regex: intentData.category, $options: "i" },
-      });
+      }).limit(6);
 
-      reply = `Here are products from ${intentData.category}`;
+      reply = `Here are ${intentData.category} products`;
     }
 
+    /* ===== SECTION ===== */
     else if (intentData.intent === "section_search") {
       products = await Product.find({
         section: intentData.section.toLowerCase(),
-      });
+      }).limit(6);
 
       reply = `Showing ${intentData.section} products`;
     }
 
+    /* ===== GENERAL SEARCH ===== */
     else {
       products = await Product.find({
         title: { $regex: message, $options: "i" },
@@ -125,27 +95,15 @@ product_search
         reply = "Here are some products you may like.";
     }
 
-    /* ===============================
-       SAVE CHAT
-    ================================ */
-
+    /* ===== SAVE CHAT ===== */
     if (userId) {
-      await Chat.create({
-        userId,
-        role: "user",
-        message,
-      });
-
-      await Chat.create({
-        userId,
-        role: "bot",
-        message: reply,
-      });
+      await Chat.create({ userId, role: "user", message });
+      await Chat.create({ userId, role: "bot", message: reply });
     }
 
     res.json({ reply, products });
   } catch (error) {
-    console.log(error);
+    console.log("CHAT ERROR:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
