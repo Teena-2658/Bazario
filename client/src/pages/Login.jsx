@@ -15,9 +15,11 @@ const Login = () => {
       return "Email is required";
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      return "Enter a valid email address";
+    // ✅ Email must start with lowercase
+    const emailRegex = /^[a-z][^\s@]*@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(formData.email.trim())) {
+      return "Email must start with lowercase letter and be valid";
     }
 
     if (!formData.password) {
@@ -44,18 +46,23 @@ const Login = () => {
       setLoading(true);
       setError("");
 
+      // ✅ Trim & Normalize before sending
+      const cleanedData = {
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password.trim(),
+      };
+
       const res = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(cleanedData),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        // If backend sends specific message like "Wrong password"
         setError(data.message || "Invalid email or password");
         setLoading(false);
         return;
@@ -100,7 +107,10 @@ const Login = () => {
           className="border p-2 mb-3 w-full rounded"
           value={formData.email}
           onChange={(e) =>
-            setFormData({ ...formData, email: e.target.value })
+            setFormData({
+              ...formData,
+              email: e.target.value.toLowerCase(), // ✅ auto lowercase
+            })
           }
         />
 

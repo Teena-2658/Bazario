@@ -11,24 +11,25 @@ const router = express.Router();
 // =========================
 router.post("/signup", async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    let { name, email, password, role } = req.body;
 
-    // 1️⃣ Empty validation
+    name = name.trim();
+    email = email.trim().toLowerCase();
+
     if (!name || !email || !password || !role) {
       return res.status(400).json({
         message: "All fields are required",
       });
     }
 
-    // 2️⃣ Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-z][^\s@]*@[^\s@]+\.[^\s@]+$/;
+
     if (!emailRegex.test(email)) {
       return res.status(400).json({
-        message: "Invalid email format",
+        message: "Email must start with lowercase letter and be valid",
       });
     }
 
-    // 3️⃣ Strong password validation
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{6,}$/;
 
@@ -39,25 +40,23 @@ router.post("/signup", async (req, res) => {
       });
     }
 
-    // 4️⃣ Role validation
     if (role !== "customer" && role !== "vendor") {
       return res.status(400).json({
         message: "Invalid role selected",
       });
     }
 
-    // 5️⃣ Duplicate email check
     const userExists = await User.findOne({ email });
+
     if (userExists) {
       return res.status(400).json({
         message: "User already exists",
       });
     }
 
-    // 6️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
+    await User.create({
       name,
       email,
       password: hashedPassword,
@@ -76,12 +75,17 @@ router.post("/signup", async (req, res) => {
 });
 
 
+
 // =========================
 // 🔐 LOGIN
 // =========================
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    // ✅ Trim & Normalize
+    email = email?.trim().toLowerCase();
+    password = password?.trim();
 
     // 1️⃣ Empty validation
     if (!email || !password) {
@@ -90,7 +94,16 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // 2️⃣ Find user
+    // 2️⃣ Email format validation (same as signup)
+    const emailRegex = /^[a-z][^\s@]*@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        message: "Invalid email format",
+      });
+    }
+
+    // 3️⃣ Find user (lowercase email already ensured)
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -99,12 +112,12 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // 3️⃣ Compare password
+    // 4️⃣ Compare password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({
-        message: "Wrong password",
+        message: "Invalid email or password",
       });
     }
 
@@ -114,14 +127,13 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // 4️⃣ Generate token
+    // 5️⃣ Generate token
     const token = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // 5️⃣ Remove password before sending
     const userData = {
       _id: user._id,
       name: user.name,

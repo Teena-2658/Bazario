@@ -19,15 +19,16 @@ const Signup = () => {
       return "Name is required";
     }
 
-    if (!form.email.trim()) {
-      return "Email is required";
-    }
+   if (!form.email.trim()) {
+  return "Email is required";
+}
 
-    // Email must contain @ and valid format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) {
-      return "Enter a valid email (must include @)";
-    }
+const emailRegex = /^[a-z][^\s@]*@[^\s@]+\.[^\s@]+$/;
+
+if (!emailRegex.test(form.email)) {
+  return "Email must start with a lowercase letter and include @";
+}
+
 
     if (!form.password) {
       return "Password is required";
