@@ -7,6 +7,9 @@ const Chatbot = () => {
 
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [voiceOn, setVoiceOn] = useState(false);
+  const [typing, setTyping] = useState(false);
+
   const [messages, setMessages] = useState([
     {
       role: "bot",
@@ -14,16 +17,15 @@ const Chatbot = () => {
         "Hi 👋 I am Bazario Assistant. Ask me about products, prices or orders.",
     },
   ]);
-  const [typing, setTyping] = useState(false);
 
   const chatEndRef = useRef(null);
 
-  // 🔽 Auto scroll
+  // ✅ Auto Scroll
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 🔽 Load previous chat (only if logged in)
+  // ✅ Load Previous Chats (Login User Only)
   useEffect(() => {
     if (!user) return;
 
@@ -39,14 +41,15 @@ const Chatbot = () => {
     loadChat();
   }, [user]);
 
-  // 🔊 Text to Speech
+  // 🔊 Voice Output (Optional)
   const speak = (text) => {
+    if (!voiceOn) return;
     const speech = new SpeechSynthesisUtterance(text);
     speech.lang = "en-IN";
     window.speechSynthesis.speak(speech);
   };
 
-  // 🎤 Speech to Text
+  // 🎤 Voice Input
   const startListening = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -61,12 +64,11 @@ const Chatbot = () => {
     recognition.start();
 
     recognition.onresult = (event) => {
-      const speechText = event.results[0][0].transcript;
-      setInput(speechText);
+      setInput(event.results[0][0].transcript);
     };
   };
 
-  // ✅ Send Message
+  // ✅ SEND MESSAGE
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -77,7 +79,7 @@ const Chatbot = () => {
 
     setMessages((prev) => [...prev, userMsg]);
 
-    // Save user message (if logged in)
+    // save user message
     if (user) {
       await fetch(`${API_URL}/api/chat/save`, {
         method: "POST",
@@ -94,33 +96,43 @@ const Chatbot = () => {
     setInput("");
     setTyping(true);
 
-    // 🔥 Replace with your ecommerce backend logic
-    const botReplyText = `Searching for "${userText}"...`;
+    try {
+      // ✅ REAL BACKEND RESPONSE
+      const res = await fetch(`${API_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userText }),
+      });
 
-    setTimeout(async () => {
-      const botMsg = {
-        role: "bot",
-        message: botReplyText,
-      };
+      const data = await res.json();
 
-      setMessages((prev) => [...prev, botMsg]);
+      setTimeout(async () => {
+        const botMsg = {
+          role: "bot",
+          message: data.reply,
+        };
+
+        setMessages((prev) => [...prev, botMsg]);
+        setTyping(false);
+
+        speak(data.reply);
+
+        // save bot reply
+        if (user) {
+          await fetch(`${API_URL}/api/chat/save`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: user._id,
+              message: data.reply,
+              role: "bot",
+            }),
+          });
+        }
+      }, 600);
+    } catch (err) {
       setTyping(false);
-
-      speak(botReplyText);
-
-      // Save bot reply
-      if (user) {
-        await fetch(`${API_URL}/api/chat/save`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: user._id,
-            message: botReplyText,
-            role: "bot",
-          }),
-        });
-      }
-    }, 700);
+    }
   };
 
   return (
@@ -151,9 +163,20 @@ const Chatbot = () => {
               Ecommerce Support Bot
             </p>
           </div>
-          <button onClick={() => setOpen(false)}>
-            <FiX size={20} />
-          </button>
+
+          <div className="flex items-center gap-3">
+            {/* Voice Toggle */}
+            <button
+              onClick={() => setVoiceOn(!voiceOn)}
+              className="text-sm"
+            >
+              {voiceOn ? "🔊" : "🔇"}
+            </button>
+
+            <button onClick={() => setOpen(false)}>
+              <FiX size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Chat Body */}
