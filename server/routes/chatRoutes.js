@@ -1,7 +1,8 @@
 import express from "express";
 import Chat from "../models/Chat.js";
 import Product from "../models/Product.js";
-import openai from "../utils/ai.js";
+import { askAI } from "../utils/ai.js";
+
 
 const router = express.Router();
 
