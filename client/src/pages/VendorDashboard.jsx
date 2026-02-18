@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { API_URL } from "../config";
-import { useNavigate } from "react-router-dom"; // ✅ added
+import { useNavigate } from "react-router-dom";
 
 const VendorDashboard = () => {
 
-  const navigate = useNavigate(); // ✅ added
+  const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user"));
   const vendorId = user?._id;
@@ -20,15 +20,14 @@ const VendorDashboard = () => {
 
   const [products, setProducts] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [errors, setErrors] = useState({});
 
   // ================= LOAD PRODUCTS =================
   const loadProducts = async () => {
     if (!vendorId) return;
 
     try {
-      const res = await fetch(
-        `${API_URL}/api/products/vendor/${vendorId}`
-      );
+      const res = await fetch(`${API_URL}/api/products/vendor/${vendorId}`);
       const data = await res.json();
       setProducts(data);
     } catch (err) {
@@ -40,9 +39,39 @@ const VendorDashboard = () => {
     loadProducts();
   }, []);
 
+  // ================= VALIDATION FUNCTION =================
+  const validateForm = () => {
+    let newErrors = {};
+
+    if (!form.title || form.title.trim().length < 3) {
+      newErrors.title = "Title must be at least 3 characters";
+    }
+
+    if (!form.price || Number(form.price) <= 0) {
+      newErrors.price = "Price must be greater than 0";
+    }
+
+    if (!form.category) {
+      newErrors.category = "Category is required";
+    }
+
+    if (!form.image || !/^https?:\/\/.+\..+/.test(form.image)) {
+      newErrors.image = "Enter valid image URL";
+    }
+
+    if (!form.description || form.description.trim().length < 10) {
+      newErrors.description = "Description must be at least 10 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // ================= ADD / UPDATE PRODUCT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
 
     try {
       const url = editingId
@@ -74,6 +103,7 @@ const VendorDashboard = () => {
         });
 
         setEditingId(null);
+        setErrors({});
         loadProducts();
       }
     } catch (err) {
@@ -101,10 +131,7 @@ const VendorDashboard = () => {
     <div className="min-h-screen bg-[#f6f7fb] p-8">
       <div className="max-w-7xl mx-auto">
 
-        {/* HEADER */}
         <div className="flex justify-between items-center mb-8">
-
-          {/* ✅ Back Button Added */}
           <button
             onClick={() => navigate("/")}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -120,10 +147,8 @@ const VendorDashboard = () => {
             Total Products:
             <span className="font-semibold"> {products.length}</span>
           </div>
-
         </div>
 
-        {/* MAIN GRID */}
         <div className="grid lg:grid-cols-3 gap-8">
 
           {/* ================= FORM SECTION ================= */}
@@ -133,84 +158,80 @@ const VendorDashboard = () => {
                 {editingId ? "Edit Product" : "Add New Product"}
               </h2>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
 
-                <input
-                  type="text"
-                  placeholder="Product Title"
-                  className="w-full border p-3 rounded-lg"
-                  value={form.title}
-                  onChange={(e) =>
-                    setForm({ ...form, title: e.target.value })
-                  }
-                  required
-                />
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Product Title"
+                    className="w-full border p-3 rounded-lg"
+                    value={form.title}
+                    onChange={(e) =>
+                      setForm({ ...form, title: e.target.value })
+                    }
+                  />
+                  {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
+                </div>
 
-                <input
-                  type="number"
-                  placeholder="Price"
-                  className="w-full border p-3 rounded-lg"
-                  value={form.price}
-                  onChange={(e) =>
-                    setForm({ ...form, price: e.target.value })
-                  }
-                  required
-                />
+                <div>
+                  <input
+                    type="number"
+                    placeholder="Price"
+                    className="w-full border p-3 rounded-lg"
+                    value={form.price}
+                    onChange={(e) =>
+                      setForm({ ...form, price: e.target.value })
+                    }
+                  />
+                  {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
+                </div>
 
-               <select
-  className="w-full border p-3 rounded-lg"
-  value={form.category}
-  onChange={(e) =>
-    setForm({ ...form, category: e.target.value })
-  }
-  required
->
-  <option value="">Select Category</option>
-  <option value="mobiles">Mobiles</option>
-  <option value="fashion">Fashion</option>
-  <option value="electronics">Electronics</option>
-  <option value="home">Home</option>
-  <option value="sports">Sports</option>
-  <option value="furniture">Furniture</option>
-  <option value="travel">Travel</option>
-  <option value="utensils">Utensils</option>
-</select>
+                <div>
+                  <select
+                    className="w-full border p-3 rounded-lg"
+                    value={form.category}
+                    onChange={(e) =>
+                      setForm({ ...form, category: e.target.value })
+                    }
+                  >
+                    <option value="">Select Category</option>
+                    <option value="mobiles">Mobiles</option>
+                    <option value="fashion">Fashion</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="home">Home</option>
+                    <option value="sports">Sports</option>
+                    <option value="furniture">Furniture</option>
+                    <option value="travel">Travel</option>
+                    <option value="utensils">Utensils</option>
+                  </select>
+                  {errors.category && <p className="text-red-500 text-sm">{errors.category}</p>}
+                </div>
 
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Image URL"
+                    className="w-full border p-3 rounded-lg"
+                    value={form.image}
+                    onChange={(e) =>
+                      setForm({ ...form, image: e.target.value })
+                    }
+                  />
+                  {errors.image && <p className="text-red-500 text-sm">{errors.image}</p>}
+                </div>
 
-                <select
-                  className="w-full border p-3 rounded-lg"
-                  value={form.section}
-                  onChange={(e) =>
-                    setForm({ ...form, section: e.target.value })
-                  }
-                >
-                  <option value="spotlight">Spotlight</option>
-                  <option value="trending">Trending</option>
-                  <option value="indemand">In Demand</option>
-                  <option value="everybody">Everybody</option>
-                </select>
-
-                <input
-                  type="text"
-                  placeholder="Image URL"
-                  className="w-full border p-3 rounded-lg"
-                  value={form.image}
-                  onChange={(e) =>
-                    setForm({ ...form, image: e.target.value })
-                  }
-                  required
-                />
-
-                <textarea
-                  placeholder="Description"
-                  rows="4"
-                  className="w-full border p-3 rounded-lg"
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                  required
-                />
+                <div>
+                  <textarea
+                    placeholder="Description"
+                    rows="4"
+                    className="w-full border p-3 rounded-lg"
+                    value={form.description}
+                    onChange={(e) =>
+                      setForm({ ...form, description: e.target.value })
+                    }
+                  />
+                  {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+                </div>
 
                 <button
                   type="submit"

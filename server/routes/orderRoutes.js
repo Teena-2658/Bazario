@@ -18,10 +18,36 @@ router.post(
     try {
       const { productId, qty, shippingAddress } = req.body;
 
+      // ===== VALIDATION =====
+      if (!productId || !qty || !shippingAddress) {
+        return res.status(400).json({ message: "Missing fields" });
+      }
+
+      if (!shippingAddress.name || shippingAddress.name.trim().length < 3) {
+        return res.status(400).json({ message: "Invalid name" });
+      }
+
+      if (!/^[0-9]{10}$/.test(shippingAddress.phone)) {
+        return res.status(400).json({ message: "Invalid phone" });
+      }
+
+      if (!shippingAddress.address || shippingAddress.address.length < 5) {
+        return res.status(400).json({ message: "Invalid address" });
+      }
+
+      if (!shippingAddress.city) {
+        return res.status(400).json({ message: "City required" });
+      }
+
+      if (!/^[0-9]{6}$/.test(shippingAddress.pincode)) {
+        return res.status(400).json({ message: "Invalid pincode" });
+      }
+
       const product = await Product.findById(productId);
       if (!product)
         return res.status(404).json({ message: "Product not found" });
 
+      // ===== STRIPE SESSION =====
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "payment",
@@ -29,24 +55,23 @@ router.post(
           {
             price_data: {
               currency: "inr",
-              product_data: {
-                name: product.title,
-              },
+              product_data: { name: product.title },
               unit_amount: product.price * 100,
             },
             quantity: qty,
           },
         ],
         success_url:
-          "https://bazario-ruddy.vercel.app/payment-success?session_id={CHECKOUT_SESSION_ID}",
+          "https://yourfrontendurl.com/payment-success?session_id={CHECKOUT_SESSION_ID}",
         cancel_url:
-          "https://bazario-ruddy.vercel.app/customer-dashboard",
+          "https://yourfrontendurl.com/customer-dashboard",
         metadata: {
           productId: product._id.toString(),
           userId: req.user.id,
         },
       });
 
+      // ===== SAVE ORDER =====
       const order = new Order({
         user: req.user.id,
         product: product._id,

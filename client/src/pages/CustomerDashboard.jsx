@@ -25,6 +25,37 @@ const CustomerDashboard = () => {
     pincode: "",
   });
 
+  // ✅ SHIPPING ERRORS STATE
+  const [shippingErrors, setShippingErrors] = useState({});
+
+  // ================= VALIDATION FUNCTION =================
+  const validateShipping = () => {
+    let errors = {};
+
+    if (!shipping.name || shipping.name.trim().length < 3) {
+      errors.name = "Name must be at least 3 characters";
+    }
+
+    if (!/^[0-9]{10}$/.test(shipping.phone)) {
+      errors.phone = "Phone must be 10 digits";
+    }
+
+    if (!shipping.address || shipping.address.trim().length < 5) {
+      errors.address = "Address must be at least 5 characters";
+    }
+
+    if (!shipping.city) {
+      errors.city = "City is required";
+    }
+
+    if (!/^[0-9]{6}$/.test(shipping.pincode)) {
+      errors.pincode = "Pincode must be 6 digits";
+    }
+
+    setShippingErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // ================= FETCH DATA =================
   useEffect(() => {
     if (!user) {
@@ -109,16 +140,7 @@ const CustomerDashboard = () => {
   const placeOrder = async () => {
     if (!selectedItem) return;
 
-    if (
-      !shipping.name ||
-      !shipping.phone ||
-      !shipping.address ||
-      !shipping.city ||
-      !shipping.pincode
-    ) {
-      alert("Please fill all shipping details");
-      return;
-    }
+    if (!validateShipping()) return;
 
     const res = await fetch(
       `${API_URL}/api/orders/create-checkout-session`,
@@ -167,7 +189,6 @@ const CustomerDashboard = () => {
       activeTab === tab ? "bg-black text-white" : "bg-white shadow"
     }`;
 
-  // ================= ITEM CARD =================
   const renderItemCard = (item) => (
     <div
       className="bg-white border rounded-lg p-3 shadow hover:shadow-md cursor-pointer"
@@ -267,7 +288,6 @@ const CustomerDashboard = () => {
           <div className="bg-white p-6 rounded shadow">
             <div className="flex justify-between mb-4">
               <h2 className="font-bold text-xl">My Cart</h2>
-
               {cart.length > 0 && (
                 <button
                   onClick={clearCart}
@@ -289,7 +309,6 @@ const CustomerDashboard = () => {
           <div className="bg-white p-6 rounded shadow">
             <div className="flex justify-between mb-4">
               <h2 className="font-bold text-xl">My Wishlist</h2>
-
               {wishlist.length > 0 && (
                 <button
                   onClick={clearWishlist}
@@ -353,43 +372,68 @@ const CustomerDashboard = () => {
 
               <input
                 placeholder="Full Name"
-                className="w-full border p-2 mb-2 rounded"
+                className="w-full border p-2 mb-1 rounded"
                 onChange={(e) =>
                   setShipping({ ...shipping, name: e.target.value })
                 }
               />
+              {shippingErrors.name && (
+                <p className="text-red-500 text-sm mb-2">
+                  {shippingErrors.name}
+                </p>
+              )}
 
               <input
                 placeholder="Phone"
-                className="w-full border p-2 mb-2 rounded"
+                className="w-full border p-2 mb-1 rounded"
                 onChange={(e) =>
                   setShipping({ ...shipping, phone: e.target.value })
                 }
               />
+              {shippingErrors.phone && (
+                <p className="text-red-500 text-sm mb-2">
+                  {shippingErrors.phone}
+                </p>
+              )}
 
               <input
                 placeholder="Address"
-                className="w-full border p-2 mb-2 rounded"
+                className="w-full border p-2 mb-1 rounded"
                 onChange={(e) =>
                   setShipping({ ...shipping, address: e.target.value })
                 }
               />
+              {shippingErrors.address && (
+                <p className="text-red-500 text-sm mb-2">
+                  {shippingErrors.address}
+                </p>
+              )}
 
               <input
                 placeholder="City"
-                className="w-full border p-2 mb-2 rounded"
+                className="w-full border p-2 mb-1 rounded"
                 onChange={(e) =>
                   setShipping({ ...shipping, city: e.target.value })
                 }
               />
+              {shippingErrors.city && (
+                <p className="text-red-500 text-sm mb-2">
+                  {shippingErrors.city}
+                </p>
+              )}
 
               <input
                 placeholder="Pincode"
-                className="w-full border p-2 mb-3 rounded"
+                className="w-full border p-2 mb-2 rounded"
                 onChange={(e) =>
                   setShipping({ ...shipping, pincode: e.target.value })
                 }
               />
+              {shippingErrors.pincode && (
+                <p className="text-red-500 text-sm mb-2">
+                  {shippingErrors.pincode}
+                </p>
+              )}
 
               <button
                 onClick={placeOrder}

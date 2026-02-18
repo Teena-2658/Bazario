@@ -12,19 +12,65 @@ const Signup = () => {
     role: "",
   });
 
+  const [error, setError] = useState("");
+
+  const validateForm = () => {
+    if (!form.name.trim()) {
+      return "Name is required";
+    }
+
+    if (!form.email.trim()) {
+      return "Email is required";
+    }
+
+    // Email must contain @ and valid format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      return "Enter a valid email (must include @)";
+    }
+
+    if (!form.password) {
+      return "Password is required";
+    }
+
+   if (!form.password) {
+  return "Password is required";
+}
+
+// Strong Password Regex
+const passwordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+
+if (!passwordRegex.test(form.password)) {
+  return "Password must contain at least 6 characters, including 1 uppercase, 1 lowercase, 1 number and 1 special character";
+}
+
+    if (!form.role) {
+      return "Please select a role";
+    }
+
+    return null; // No error
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await fetch(
-      `${API_URL}/api/auth/signup`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      }
-    );
+    const validationError = validateForm();
+
+    if (validationError) {
+      setError(validationError);
+      return; // Stop form submission
+    }
+
+    setError("");
+
+    const res = await fetch(`${API_URL}/api/auth/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(form),
+    });
 
     const data = await res.json();
 
@@ -46,17 +92,26 @@ const Signup = () => {
           Signup
         </h2>
 
+        {error && (
+          <p className="text-red-500 text-sm mb-3 text-center">
+            {error}
+          </p>
+        )}
+
         <input
           placeholder="Name"
           className="border p-2 w-full mb-3 rounded"
+          value={form.name}
           onChange={(e) =>
             setForm({ ...form, name: e.target.value })
           }
         />
 
         <input
+          type="email"
           placeholder="Email"
           className="border p-2 w-full mb-3 rounded"
+          value={form.email}
           onChange={(e) =>
             setForm({ ...form, email: e.target.value })
           }
@@ -66,6 +121,7 @@ const Signup = () => {
           type="password"
           placeholder="Password"
           className="border p-2 w-full mb-3 rounded"
+          value={form.password}
           onChange={(e) =>
             setForm({ ...form, password: e.target.value })
           }
@@ -73,6 +129,7 @@ const Signup = () => {
 
         <select
           className="border p-2 w-full mb-4 rounded"
+          value={form.role}
           onChange={(e) =>
             setForm({ ...form, role: e.target.value })
           }

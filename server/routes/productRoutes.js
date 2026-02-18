@@ -4,8 +4,10 @@ import Product from "../models/Product.js";
 const router = express.Router();
 
 
+// ===============================
 // ✅ ADD PRODUCT
 // POST /api/products/add
+// ===============================
 router.post("/add", async (req, res) => {
   try {
     const {
@@ -18,51 +20,110 @@ router.post("/add", async (req, res) => {
       vendorId,
     } = req.body;
 
-    if (!vendorId) {
+    // 🔐 Required Field Validation
+    if (
+      !title ||
+      !price ||
+      !description ||
+      !image ||
+      !category ||
+      !section ||
+      !vendorId
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Vendor not logged in",
+        message: "All fields are required",
+      });
+    }
+
+    // 🔐 Price validation
+    if (isNaN(price) || Number(price) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Price must be a valid positive number",
+      });
+    }
+
+    // 🔐 Image URL validation
+    const urlRegex = /^(https?:\/\/)[^\s$.?#].[^\s]*$/i;
+    if (!urlRegex.test(image)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid image URL",
+      });
+    }
+
+    // 🔐 Allowed sections validation
+    const allowedSections = ["spotlight", "trending", "new"];
+    if (!allowedSections.includes(section.toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid section",
+      });
+    }
+
+    // 🔐 Basic category validation (optional predefined list)
+    const allowedCategories = [
+      "electronics",
+      "fashion",
+      "home",
+      "beauty",
+      "sports",
+    ];
+
+    if (!allowedCategories.includes(category.toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid category",
       });
     }
 
     const product = new Product({
-      title,
-      price,
-      description,
-      image,
-      category,
-      section: section.toLowerCase(),
+      title: title.trim(),
+      price: Number(price),
+      description: description.trim(),
+      image: image.trim(),
+      category: category.toLowerCase().trim(),
+      section: section.toLowerCase().trim(),
       vendorId,
     });
 
     await product.save();
 
-    res.json({
+    res.status(201).json({
       success: true,
-      message: "Product added",
+      message: "Product added successfully",
       product,
     });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 });
 
 
+// ===============================
 // ✅ GET ALL PRODUCTS
 // GET /api/products
+// ===============================
 router.get("/", async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().sort({ createdAt: -1 });
+
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 
+// ===============================
 // ✅ GET PRODUCTS BY SECTION
-// GET /api/products/section/spotlight
+// GET /api/products/section/:section
+// ===============================
 router.get("/section/:section", async (req, res) => {
   try {
     const section = req.params.section.toLowerCase();
@@ -71,13 +132,32 @@ router.get("/section/:section", async (req, res) => {
 
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 
-// ✅ GET PRODUCTS BY VENDOR (Dashboard Fix)
+// ===============================
+// ✅ GET PRODUCTS BY CATEGORY
+// GET /api/products/category/:category
+// ===============================
+router.get("/category/:category", async (req, res) => {
+  try {
+    const category = req.params.category.toLowerCase();
+
+    const products = await Product.find({ category });
+
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// ===============================
+// ✅ GET PRODUCTS BY VENDOR
 // GET /api/products/vendor/:vendorId
+// ===============================
 router.get("/vendor/:vendorId", async (req, res) => {
   try {
     const products = await Product.find({
@@ -86,39 +166,52 @@ router.get("/vendor/:vendorId", async (req, res) => {
 
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 
-// ✅ GET PRODUCT BY ID (Product Details)
+// ===============================
+// ✅ GET PRODUCT BY ID
+// ⚠ ALWAYS LAST GET ROUTE
 // GET /api/products/:id
-// ⚠️ ALWAYS LAST GET ROUTE
+// ===============================
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({
+        message: "Product not found",
+      });
     }
 
     res.json(product);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 
+// ===============================
 // ✅ UPDATE PRODUCT
 // PUT /api/products/:id
+// ===============================
 router.put("/:id", async (req, res) => {
   try {
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true }
     );
+
+    if (!updatedProduct) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
 
     res.json({
       success: true,
@@ -126,16 +219,25 @@ router.put("/:id", async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 
+// ===============================
 // ✅ DELETE PRODUCT
 // DELETE /api/products/:id
+// ===============================
 router.delete("/:id", async (req, res) => {
   try {
-    await Product.findByIdAndDelete(req.params.id);
+
+    const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+
+    if (!deletedProduct) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
 
     res.json({
       success: true,
@@ -143,21 +245,7 @@ router.delete("/:id", async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-// GET PRODUCTS BY CATEGORY
-router.get("/category/:category", async (req, res) => {
-  try {
-    const { category } = req.params;
-
-    const products = await Product.find({
-      category: category.toLowerCase(),
-    });
-
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
