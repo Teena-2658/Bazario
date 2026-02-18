@@ -14,23 +14,18 @@ export const askAI = async (message) => {
           content: `
 You are an ecommerce assistant.
 
-Extract intent from user message.
+Return ONLY valid JSON in this format:
 
-Return ONLY valid JSON like:
 {
-  "intent": "",
+  "intent": "price_query | description_query | category_search | section_search | product_search",
   "category": "",
   "section": "",
   "productName": "",
   "maxPrice": ""
 }
 
-intent values:
-price_query
-description_query
-category_search
-section_search
-product_search
+DO NOT add explanation.
+DO NOT add text outside JSON.
 `,
         },
         {
@@ -41,11 +36,30 @@ product_search
       temperature: 0,
     });
 
-    const text = response.choices[0].message.content;
+    const text = response.choices[0].message.content.trim();
 
-    return JSON.parse(text);
+    try {
+      return JSON.parse(text);
+    } catch (parseError) {
+      console.log("JSON Parse Failed:", text);
+
+      return {
+        intent: "product_search",
+        category: "",
+        section: "",
+        productName: message,
+        maxPrice: "",
+      };
+    }
   } catch (err) {
     console.log("AI ERROR:", err);
-    return null;
+
+    return {
+      intent: "product_search",
+      category: "",
+      section: "",
+      productName: message,
+      maxPrice: "",
+    };
   }
 };

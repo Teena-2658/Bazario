@@ -115,53 +115,38 @@ You can ask:
   /* ===============================
      SEND MESSAGE
   =============================== */
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+const sendMessage = async () => {
+  if (!input.trim()) return;
 
-    const userText = input;
-
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", message: userText },
-    ]);
-
-    setInput("");
-    setTyping(true);
-
-    try {
-      const res = await fetch(`${API_URL}/api/chat/send`, {
+  try {
+    const res = await fetch(
+      "https://bazario-eg4p.onrender.com/api/chat/send",
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userId: user?._id,
-          message: userText,
+          message: input,
         }),
-      });
+      }
+    );
 
-      const data = await res.json();
+    const data = await res.json();
 
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          { role: "bot", message: data.reply },
-        ]);
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", message: input },
+      { role: "bot", message: data.reply },
+    ]);
 
-        if (data.products?.length > 0) {
-          setProductResults(data.products);
-        } else {
-          setProductResults([]);
-        }
-
-        setTyping(false);
-        speak(data.reply);
-      }, 500);
-    } catch (err) {
-      console.log(err);
-      setTyping(false);
-    }
-  };
+    setProducts(data.products || []);
+    setInput("");
+  } catch (error) {
+    console.log("Frontend error:", error);
+  }
+};
 
   return (
     <>
