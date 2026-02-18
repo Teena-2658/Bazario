@@ -1,65 +1,32 @@
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
 });
 
 export const askAI = async (message) => {
   try {
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await client.chat.completions.create({
+      model: "llama3-8b-8192",
       messages: [
         {
           role: "system",
-          content: `
-You are an ecommerce assistant.
-
-Return ONLY valid JSON in this format:
-
-{
-  "intent": "price_query | description_query | category_search | section_search | product_search",
-  "category": "",
-  "section": "",
-  "productName": "",
-  "maxPrice": ""
-}
-
-DO NOT add explanation.
-DO NOT add text outside JSON.
-`,
+          content:
+            "You are an ecommerce AI assistant. Help users find products and respond clearly.",
         },
         {
           role: "user",
           content: message,
         },
       ],
-      temperature: 0,
+      temperature: 0.7,
     });
 
-    const text = response.choices[0].message.content.trim();
+    return completion.choices[0].message.content;
 
-    try {
-      return JSON.parse(text);
-    } catch (parseError) {
-      console.log("JSON Parse Failed:", text);
-
-      return {
-        intent: "product_search",
-        category: "",
-        section: "",
-        productName: message,
-        maxPrice: "",
-      };
-    }
-  } catch (err) {
-    console.log("AI ERROR:", err);
-
-    return {
-      intent: "product_search",
-      category: "",
-      section: "",
-      productName: message,
-      maxPrice: "",
-    };
+  } catch (error) {
+    console.error("AI ERROR:", error.message);
+    return "AI service temporarily unavailable. Please try again.";
   }
 };
