@@ -9,18 +9,20 @@ const Chatbot = () => {
   const [input, setInput] = useState("");
   const [voiceOn, setVoiceOn] = useState(false);
   const [typing, setTyping] = useState(false);
+
+  // ✅ PRODUCT STATE (IMPORTANT FIX)
   const [productResults, setProductResults] = useState([]);
 
   const chatBodyRef = useRef(null);
   const chatEndRef = useRef(null);
 
   /* ===============================
-     DEFAULT BOT MESSAGE (GUIDE)
+     DEFAULT BOT MESSAGE
   =============================== */
-const [messages, setMessages] = useState([
-  {
-    role: "bot",
-    message: `Hi 👋 I am Bazario Assistant.
+  const [messages, setMessages] = useState([
+    {
+      role: "bot",
+      message: `Hi 👋 I am Bazario Assistant.
 
 You can ask:
 • price of iPhone
@@ -31,12 +33,11 @@ You can ask:
 • show everyday products
 • products under 20000
 `,
-  },
-]);
-
+    },
+  ]);
 
   /* ===============================
-     AUTO SCROLL (ONLY IF USER AT BOTTOM)
+     AUTO SCROLL
   =============================== */
   const scrollToBottom = () => {
     const container = chatBodyRef.current;
@@ -58,16 +59,14 @@ You can ask:
   }, [messages, typing]);
 
   /* ===============================
-     LOAD CHAT HISTORY (USER WISE)
+     LOAD CHAT HISTORY
   =============================== */
   useEffect(() => {
     if (!user) return;
 
     const loadChat = async () => {
       try {
-        const res = await fetch(
-          `${API_URL}/api/chat/${user._id}`
-        );
+        const res = await fetch(`${API_URL}/api/chat/${user._id}`);
         const data = await res.json();
 
         if (data.length > 0) {
@@ -115,38 +114,52 @@ You can ask:
   /* ===============================
      SEND MESSAGE
   =============================== */
-const sendMessage = async () => {
-  if (!input.trim()) return;
+  const sendMessage = async () => {
+    if (!input.trim()) return;
 
-  try {
-    const res = await fetch(
-      "https://bazario-eg4p.onrender.com/api/chat/send",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: user?._id,
-          message: input,
-        }),
-      }
-    );
+    const userMessage = input;
 
-    const data = await res.json();
-
+    // show user message instantly
     setMessages((prev) => [
       ...prev,
-      { role: "user", message: input },
-      { role: "bot", message: data.reply },
+      { role: "user", message: userMessage },
     ]);
 
-    setProducts(data.products || []);
-    setInput("");
-  } catch (error) {
-    console.log("Frontend error:", error);
-  }
-};
+    setTyping(true);
+
+    try {
+      const res = await fetch(
+        "https://bazario-eg4p.onrender.com/api/chat/send",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: user?._id,
+            message: userMessage,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", message: data.reply },
+      ]);
+
+      // ✅ FIXED HERE
+      setProductResults(data.products || []);
+
+      speak(data.reply);
+      setInput("");
+    } catch (error) {
+      console.log("Frontend error:", error);
+    }
+
+    setTyping(false);
+  };
 
   return (
     <>
@@ -169,9 +182,7 @@ const sendMessage = async () => {
         {/* HEADER */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 flex justify-between">
           <div>
-            <h2 className="font-semibold text-lg">
-              Bazario Assistant
-            </h2>
+            <h2 className="font-semibold text-lg">Bazario Assistant</h2>
             <p className="text-xs opacity-80">
               Ask about products & categories
             </p>
@@ -234,6 +245,7 @@ const sendMessage = async () => {
                 <img
                   src={product.image}
                   className="w-16 h-16 object-cover rounded"
+                  alt=""
                 />
                 <div>
                   <p className="text-sm font-semibold">

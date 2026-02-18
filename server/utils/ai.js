@@ -8,12 +8,11 @@ const client = new OpenAI({
 export const askAI = async (message) => {
   try {
     const completion = await client.chat.completions.create({
-      model: "llama3-8b-8192",
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
-          content:
-            "You are an ecommerce AI assistant. Help users find products and respond clearly.",
+          content: "You are a helpful ecommerce AI assistant.",
         },
         {
           role: "user",
@@ -23,10 +22,11 @@ export const askAI = async (message) => {
       temperature: 0.7,
     });
 
-    return completion.choices[0].message.content;
+    return completion?.choices?.[0]?.message?.content || 
+           "No response from AI.";
 
   } catch (error) {
-    console.error("AI ERROR:", error.message);
-    return "AI service temporarily unavailable. Please try again.";
+    console.log("AI ERROR:", error.message);
+    return "AI temporarily unavailable.";
   }
 };
