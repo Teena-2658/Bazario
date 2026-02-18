@@ -22,21 +22,15 @@ const [messages, setMessages] = useState([
     role: "bot",
     message: `Hi 👋 I am Bazario Assistant.
 
-You can ask me things like:
-
-🛒 Product Queries:
+You can ask:
 • price of iPhone
 • description of shoes
 • show electronics category
-• fashion products
-
-🔥 Section Queries:
-• show trending products
 • show spotlight products
-• show in demand products
+• show trending products
 • show everyday products
-
-💡 Tip: Use simple words like product name, category or section.`,
+• products under 20000
+`,
   },
 ]);
 
