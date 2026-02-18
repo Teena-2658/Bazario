@@ -24,117 +24,121 @@ router.get("/:userId", async (req, res) => {
    SEND MESSAGE
 ========================================= */
 router.post("/send", async (req, res) => {
-  const { userId, message } = req.body;
-
-  if (!message) {
-    return res.status(400).json({ message: "Message required" });
-  }
-
-  const text = message.toLowerCase().trim();
-
-  let reply = "Sorry, I couldn't find anything related to that.";
-  let products = [];
-
   try {
-    /* =========================================
-       PRICE QUERY
-    ========================================= */
-    if (text.includes("price")) {
-      const cleanedText = text.replace("price", "").trim();
+    const { message, userId } = req.body;
 
-      const product = await Product.findOne({
-        title: { $regex: cleanedText, $options: "i" },
+    if (!message) {
+      return res.json({
+        reply: "Please type something.",
+        products: [],
       });
+    }
 
-      if (product) {
-        reply = `${product.title} price is ₹${product.price}`;
-        products = [product];
+    const text = message.toLowerCase().trim();
+
+    let reply = "";
+    let products = [];
+
+    /* ===============================
+       1️⃣ SECTION SEARCH
+    =============================== */
+
+    const sections = ["spotlight", "trending", "indemand", "everyday"];
+
+    for (let sec of sections) {
+      if (text.includes(sec)) {
+        products = await Product.find({
+          section: { $regex: sec, $options: "i" },
+        }).limit(6);
+
+        if (products.length > 0) {
+          reply = `Showing ${sec} products 👇`;
+        }
       }
     }
 
-    /* =========================================
-       DESCRIPTION QUERY
-    ========================================= */
-    else if (text.includes("description")) {
-      const cleanedText = text.replace("description", "").trim();
+    /* ===============================
+       2️⃣ CATEGORY SEARCH
+    =============================== */
 
-      const product = await Product.findOne({
-        title: { $regex: cleanedText, $options: "i" },
-      });
-
-      if (product) {
-        reply = product.description;
-        products = [product];
-      }
-    }
-
-    /* =========================================
-       SECTION BASED (spotlight / trending / indemand / everybody)
-    ========================================= */
-    else if (
-      text.includes("spotlight") ||
-      text.includes("trending") ||
-      text.includes("indemand") ||
-      text.includes("everybody")
-    ) {
-      let sectionName = "";
-
-      if (text.includes("spotlight")) sectionName = "spotlight";
-      if (text.includes("trending")) sectionName = "trending";
-      if (text.includes("indemand")) sectionName = "indemand";
-      if (text.includes("everybody")) sectionName = "everybody";
+    if (products.length === 0 && text.includes("category")) {
+      const cleaned = text
+        .replace("show", "")
+        .replace("category", "")
+        .trim();
 
       products = await Product.find({
-        section: sectionName,
+        category: { $regex: cleaned, $options: "i" },
       }).limit(6);
 
       if (products.length > 0) {
-        reply = `Here are ${sectionName} products.`;
+        reply = `Here are products from ${cleaned} category 👇`;
       }
     }
 
-    /* =========================================
-       GENERAL SEARCH (TITLE + CATEGORY + SECTION)
-    ========================================= */
-    else {
+    /* ===============================
+       3️⃣ PRICE QUERY
+    =============================== */
+
+    if (products.length === 0 && text.includes("price")) {
+      const cleaned = text
+        .replace("price of", "")
+        .replace("price", "")
+        .trim();
+
+      products = await Product.find({
+        title: { $regex: cleaned, $options: "i" },
+      }).limit(6);
+
+      if (products.length > 0) {
+        reply = `Here is the price information 👇`;
+      }
+    }
+
+    /* ===============================
+       4️⃣ GENERAL SEARCH (SMART)
+    =============================== */
+
+    if (products.length === 0) {
       products = await Product.find({
         $or: [
           { title: { $regex: text, $options: "i" } },
           { category: { $regex: text, $options: "i" } },
-          { section: { $regex: text, $options: "i" } },
         ],
       }).limit(6);
 
       if (products.length > 0) {
-        reply = `Here are products related to "${message}"`;
+        reply = `Here are matching products 👇`;
       }
     }
 
-    /* =========================================
-       SAVE CHAT HISTORY
-    ========================================= */
-    if (userId) {
-      await Chat.create({
-        userId,
-        role: "user",
-        message,
-      });
+    /* ===============================
+       5️⃣ NOT FOUND
+    =============================== */
 
-      await Chat.create({
-        userId,
-        role: "bot",
-        message: reply,
-      });
+    if (products.length === 0) {
+      reply =
+        "I couldn't find exact match 😔 Try product name, category or section like trending, spotlight, everyday.";
     }
 
-    res.json({
-      reply,
-      products,
+    /* ===============================
+       SAVE CHAT
+    =============================== */
+
+    if (userId) {
+      await Chat.create({ userId, role: "user", message });
+      await Chat.create({ userId, role: "bot", message: reply });
+    }
+
+    res.json({ reply, products });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      reply: "Server error",
+      products: [],
     });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Server error" });
   }
 });
+
 
 export default router;
