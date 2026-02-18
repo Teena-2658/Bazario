@@ -18,15 +18,6 @@ router.post("/add", async (req, res) => {
       vendorId,
     } = req.body;
 
-    // ✅ Basic Required Validation
-    if (!title || !price || !description || !image || !category || !section) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
-    }
-
-    // ✅ Vendor Check
     if (!vendorId) {
       return res.status(400).json({
         success: false,
@@ -34,29 +25,38 @@ router.post("/add", async (req, res) => {
       });
     }
 
-    // ✅ Price Validation
-    if (price <= 0) {
+    // ✅ Title must be at least 3 words
+    const titleWordCount = title?.trim().split(/\s+/).length;
+    if (!title || titleWordCount < 3) {
+      return res.status(400).json({
+        success: false,
+        message: "Title must contain at least 3 words",
+      });
+    }
+
+    // ✅ Price must be greater than 0
+    if (!price || Number(price) <= 0) {
       return res.status(400).json({
         success: false,
         message: "Price must be greater than 0",
       });
     }
 
-    // ✅ Image URL Validation
-    const urlPattern = /^(https?:\/\/.*\.(?:png|jpg|jpeg|webp|gif))$/i;
-    if (!urlPattern.test(image)) {
+    // ✅ Description must be at least 10 words
+    const descriptionWordCount = description?.trim().split(/\s+/).length;
+    if (!description || descriptionWordCount < 10) {
       return res.status(400).json({
         success: false,
-        message: "Invalid Image URL",
+        message: "Description must contain at least 10 words",
       });
     }
 
     const product = new Product({
       title: title.trim(),
-      price,
+      price: Number(price),
       description: description.trim(),
       image,
-      category: category.toLowerCase(),
+      category,
       section: section.toLowerCase(),
       vendorId,
     });
@@ -141,31 +141,41 @@ router.get("/:id", async (req, res) => {
 // PUT /api/products/:id
 router.put("/:id", async (req, res) => {
   try {
-    const { title, price, description, image, category, section } = req.body;
+    const { title, price, description } = req.body;
 
-    if (!title || !price || !description || !image || !category || !section) {
+    // ✅ Title validation
+    const titleWordCount = title?.trim().split(/\s+/).length;
+    if (!title || titleWordCount < 3) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required",
+        message: "Title must contain at least 3 words",
       });
     }
 
-    if (price <= 0) {
+    // ✅ Price validation
+    if (!price || Number(price) <= 0) {
       return res.status(400).json({
         success: false,
         message: "Price must be greater than 0",
       });
     }
 
+    // ✅ Description validation
+    const descriptionWordCount = description?.trim().split(/\s+/).length;
+    if (!description || descriptionWordCount < 10) {
+      return res.status(400).json({
+        success: false,
+        message: "Description must contain at least 10 words",
+      });
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       {
+        ...req.body,
         title: title.trim(),
-        price,
+        price: Number(price),
         description: description.trim(),
-        image,
-        category: category.toLowerCase(),
-        section: section.toLowerCase(),
       },
       { new: true }
     );

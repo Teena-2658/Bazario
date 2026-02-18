@@ -41,33 +41,44 @@ const VendorDashboard = () => {
   }, []);
 
   // ================= ADD / UPDATE PRODUCT =================
+// ================= ADD / UPDATE PRODUCT =================
 const handleSubmit = async (e) => {
   e.preventDefault();
 
-  // ✅ Frontend Validation
-
+  // ✅ Title must be at least 3 words
   if (!form.title.trim()) {
     alert("Title is required");
     return;
   }
 
-  if (!form.price || form.price <= 0) {
-    alert("Enter valid price");
+  const titleWordCount = form.title.trim().split(/\s+/).length;
+  if (titleWordCount < 3) {
+    alert("Title must contain at least 3 words");
     return;
   }
 
+  // ✅ Price validation
+  if (!form.price || Number(form.price) <= 0) {
+    alert("Price must be greater than 0");
+    return;
+  }
+
+  // ✅ Category required
   if (!form.category) {
     alert("Select category");
     return;
   }
 
+  // ✅ Image URL validation
   if (!form.image.startsWith("http")) {
     alert("Enter valid image URL");
     return;
   }
 
-  if (form.description.length < 10) {
-    alert("Description must be at least 10 characters");
+  // ✅ Description must be at least 10 words
+  const descriptionWordCount = form.description.trim().split(/\s+/).length;
+  if (descriptionWordCount < 10) {
+    alert("Description must contain at least 10 words");
     return;
   }
 
@@ -114,6 +125,7 @@ const handleSubmit = async (e) => {
     alert("Something went wrong");
   }
 };
+
 
 
   // ================= DELETE PRODUCT =================
