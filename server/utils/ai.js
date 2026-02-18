@@ -5,57 +5,57 @@ const client = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
 });
 
-export const askAI = async (message) => {
+export const askAI = async (message, products = []) => {
   try {
+
+    let productInfo = "No matching products found.";
+
+    if (products.length > 0) {
+      productInfo = products.map(p => `
+Title: ${p.title}
+Price: ₹${p.price}
+Description: ${p.description}
+Category: ${p.category}
+`).join("\n");
+    }
+
     const completion = await client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      temperature: 0,
+      model: "llama-3.3-70b-versatile", // latest stable groq model
       messages: [
         {
           role: "system",
           content: `
-You are an ecommerce AI assistant.
+You are an intelligent ecommerce AI assistant.
 
-Return ONLY JSON in this format:
-
-{
-  "intent": "price_query | description_query | category_search | section_search | general",
-  "productName": "product name or null",
-  "category": "category name or null",
-  "section": "spotlight | trending | everyday | null"
-}
-
-Examples:
-
-User: cost of men casual shirt
-Response:
-{
-  "intent": "price_query",
-  "productName": "men casual shirt",
-  "category": null,
-  "section": null
-}
+Rules:
+- Always respond naturally like ChatGPT.
+- Understand user intent automatically.
+- If user asks price, include price.
+- If user asks description, explain product.
+- If both asked, include both.
+- If product not found, suggest alternatives.
+- Never say you are an AI model.
+- Always give helpful response.
 `,
         },
         {
           role: "user",
-          content: message,
+          content: `
+User message:
+${message}
+
+Available products:
+${productInfo}
+`,
         },
       ],
+      temperature: 0.7,
     });
 
-    const text = completion.choices[0].message.content;
-
-    return JSON.parse(text);
+    return completion.choices[0].message.content;
 
   } catch (error) {
     console.log("AI ERROR:", error.message);
-
-    return {
-      intent: "general",
-      productName: null,
-      category: null,
-      section: null,
-    };
+    return "Sorry, AI is temporarily unavailable.";
   }
 };

@@ -21,70 +21,19 @@ router.get("/:userId", async (req, res) => {
 router.post("/send", async (req, res) => {
   const { userId, message } = req.body;
 
-  if (!message) {
-    return res.status(400).json({ message: "Message required" });
-  }
-
-  let reply = "Sorry, I couldn't find anything.";
-  let products = [];
-
   try {
-    const intentData = await askAI(message);
 
-    /* PRICE QUERY */
-    if (intentData.intent === "price_query") {
-      const product = await Product.findOne({
-        title: { $regex: intentData.productName, $options: "i" },
-      });
+    // broad product search
+    const products = await Product.find({
+      $or: [
+        { title: { $regex: message, $options: "i" } },
+        { category: { $regex: message, $options: "i" } },
+      ],
+    }).limit(5);
 
-      if (product) {
-        reply = `${product.title} price is ₹${product.price}`;
-        products = [product];
-      }
-    }
+    // AI decides response
+    const reply = await askAI(message, products);
 
-    /* DESCRIPTION */
-    else if (intentData.intent === "description_query") {
-      const product = await Product.findOne({
-        title: { $regex: intentData.productName, $options: "i" },
-      });
-
-      if (product) {
-        reply = product.description;
-        products = [product];
-      }
-    }
-
-    /* CATEGORY */
-    else if (intentData.intent === "category_search") {
-      products = await Product.find({
-        category: { $regex: intentData.category, $options: "i" },
-      }).limit(6);
-
-      reply = `Here are ${intentData.category} products`;
-    }
-
-    /* SECTION */
-    else if (intentData.intent === "section_search") {
-      products = await Product.find({
-        section: intentData.section?.toLowerCase(),
-      }).limit(6);
-
-      reply = `Showing ${intentData.section} products`;
-    }
-
-    /* GENERAL SEARCH */
-    else {
-      products = await Product.find({
-        title: { $regex: message, $options: "i" },
-      }).limit(6);
-
-      if (products.length > 0) {
-        reply = "Here are some products you may like.";
-      }
-    }
-
-    /* SAVE CHAT */
     if (userId) {
       await Chat.create({ userId, role: "user", message });
       await Chat.create({ userId, role: "bot", message: reply });
@@ -93,12 +42,13 @@ router.post("/send", async (req, res) => {
     res.json({ reply, products });
 
   } catch (error) {
-    console.log("CHAT ERROR:", error);
+    console.log(error);
     res.json({
-      reply: "Something went wrong. Please try again.",
+      reply: "Something went wrong.",
       products: [],
     });
   }
 });
+
 
 export default router;
