@@ -3,7 +3,7 @@ import BannerSlider from "../components/BannerSlider";
 import Categories from "../components/Categories";
 import ProductRow from "../components/ProductRow";
 import { API_URL } from "../config";
-
+import Chatbot from "../components/Chatbot";
 const Home = () => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
@@ -87,7 +87,7 @@ const Home = () => {
             url={`${API_URL}/api/products/section/everybody`}
           />
         </div>
-
+<Chatbot />
       </div>
     </div>
   );
