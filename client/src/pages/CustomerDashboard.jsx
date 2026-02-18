@@ -32,8 +32,8 @@ const CustomerDashboard = () => {
   const validateShipping = () => {
     let errors = {};
 
-    if (!shipping.name || shipping.name.trim().length < 3) {
-      errors.name = "Name must be at least 3 characters";
+    if (!shipping.name || shipping.name.trim().length < 2) {
+      errors.name = "Name must be at least 2 characters";
     }
 
     if (!/^[0-9]{10}$/.test(shipping.phone)) {
