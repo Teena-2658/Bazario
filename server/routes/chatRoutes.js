@@ -1,5 +1,5 @@
 import express from "express";
-import Chat from "../models/Chat.js";   
+import Chat from "../models/Chat.js";
 import Product from "../models/Product.js";
 
 const router = express.Router();
@@ -9,9 +9,9 @@ const router = express.Router();
 ========================================= */
 router.get("/:userId", async (req, res) => {
   try {
-    const chats = await Chat.find({ userId: req.params.userId }).sort({
-      createdAt: 1,
-    });
+    const chats = await Chat.find({
+      userId: req.params.userId,
+    }).sort({ createdAt: 1 });
 
     res.json(chats);
   } catch (error) {
@@ -30,7 +30,7 @@ router.post("/send", async (req, res) => {
     return res.status(400).json({ message: "Message required" });
   }
 
-  const text = message.toLowerCase();
+  const text = message.toLowerCase().trim();
 
   let reply = "Sorry, I couldn't find anything related to that.";
   let products = [];
@@ -63,67 +63,55 @@ router.post("/send", async (req, res) => {
       });
 
       if (product) {
-        reply = product.description || "No description available.";
+        reply = product.description;
         products = [product];
       }
     }
 
     /* =========================================
-       CATEGORY QUERY
+       SECTION BASED (spotlight / trending / indemand / everybody)
     ========================================= */
-    else if (text.includes("category")) {
-      const categoryName = text.replace("category", "").trim();
+    else if (
+      text.includes("spotlight") ||
+      text.includes("trending") ||
+      text.includes("indemand") ||
+      text.includes("everybody")
+    ) {
+      let sectionName = "";
+
+      if (text.includes("spotlight")) sectionName = "spotlight";
+      if (text.includes("trending")) sectionName = "trending";
+      if (text.includes("indemand")) sectionName = "indemand";
+      if (text.includes("everybody")) sectionName = "everybody";
 
       products = await Product.find({
-        category: { $regex: categoryName, $options: "i" },
+        section: sectionName,
       }).limit(6);
 
       if (products.length > 0) {
-        reply = `Here are some products from ${categoryName} category.`;
+        reply = `Here are ${sectionName} products.`;
       }
     }
 
     /* =========================================
-       TRENDING PRODUCTS
-    ========================================= */
-    else if (text.includes("trending")) {
-      products = await Product.find({
-        isTrending: true,
-      }).limit(6);
-
-      if (products.length > 0) {
-        reply = "Here are our trending products 🔥";
-      }
-    }
-
-    /* =========================================
-       SPOTLIGHT PRODUCTS
-    ========================================= */
-    else if (text.includes("spotlight")) {
-      products = await Product.find({
-        isSpotlight: true,
-      }).limit(6);
-
-      if (products.length > 0) {
-        reply = "These products are currently in spotlight ✨";
-      }
-    }
-
-    /* =========================================
-       GENERAL PRODUCT SEARCH
+       GENERAL SEARCH (TITLE + CATEGORY + SECTION)
     ========================================= */
     else {
       products = await Product.find({
-        title: { $regex: text, $options: "i" },
+        $or: [
+          { title: { $regex: text, $options: "i" } },
+          { category: { $regex: text, $options: "i" } },
+          { section: { $regex: text, $options: "i" } },
+        ],
       }).limit(6);
 
       if (products.length > 0) {
-        reply = `Here are results related to "${message}"`;
+        reply = `Here are products related to "${message}"`;
       }
     }
 
     /* =========================================
-       SAVE USER MESSAGE
+       SAVE CHAT HISTORY
     ========================================= */
     if (userId) {
       await Chat.create({
