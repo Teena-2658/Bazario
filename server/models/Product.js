@@ -15,7 +15,11 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-
+ status: {
+    type: String,
+    enum: ["active", "outofstock"],
+    default: "active",
+  },
   image: {
     type: String,
     required: true,
@@ -32,10 +36,10 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
 
-  vendorId: {
-    type: String,
-    required: true,
-  },
+    vendorId: {
+      type: String,
+      required: true,
+    },
 
   createdAt: {
     type: Date,

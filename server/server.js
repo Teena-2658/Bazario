@@ -12,6 +12,8 @@ import orderRoutes from "./routes/orderRoutes.js";
 import chatRoutes from "./routes/chat.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import visitRoutes from "./routes/visitRoutes.js";
+import vendorRoutes from "./routes/vendorRoutes.js";
+import customerRoute from "./routes/customerRoute.js";
 const app = express();
 
 console.log("ADMIN FROM ENV:", process.env.ADMIN_EMAIL);
@@ -36,8 +38,9 @@ app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/user", userRoutes);
-
+app.use("/api/vendors", vendorRoutes);
 app.use("/api/visits", visitRoutes);
+app.use("/api/customer", customerRoute);
 app.use("/api/admin", adminRoutes);
 app.use("/api/chat", chatRoutes);
 // MongoDB Connection
