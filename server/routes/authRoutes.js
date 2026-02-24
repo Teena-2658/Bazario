@@ -77,6 +77,7 @@ router.post("/signup", async (req, res) => {
 
 
 // =========================
+// =========================
 // 🔐 LOGIN
 // =========================
 router.post("/login", async (req, res) => {
@@ -94,7 +95,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // 2️⃣ Email format validation (same as signup)
+    // 2️⃣ Email format validation
     const emailRegex = /^[a-z][^\s@]*@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
@@ -103,7 +104,33 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // 3️⃣ Find user (lowercase email already ensured)
+    // =====================================================
+    // ✅ 3️⃣ FIRST CHECK ADMIN (.env se direct login)
+    // =====================================================
+    if (
+      email === process.env.ADMIN_EMAIL &&
+      password === process.env.ADMIN_PASSWORD
+    ) {
+      const token = jwt.sign(
+        { role: "admin" },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+
+      return res.status(200).json({
+        message: "Admin login successful",
+        user: {
+          name: "Admin",
+          email: process.env.ADMIN_EMAIL,
+          role: "admin",
+        },
+        token,
+      });
+    }
+
+    // =====================================================
+    // 4️⃣ Normal User Login (Customer / Vendor)
+    // =====================================================
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -112,7 +139,6 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // 4️⃣ Compare password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -127,9 +153,8 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // 5️⃣ Generate token
     const token = jwt.sign(
-      { id: user._id },
+      { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );

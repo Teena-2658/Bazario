@@ -12,6 +12,12 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CategoryProducts from "./pages/CategoryProducts";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminRoute from "./components/AdminRoute";
+import AdminUsers from "./pages/AdminUsers";
+import AdminProducts from "./pages/AdminProducts";
+import ProtectedRoute from "./components/ProtectedRoute";
 function App() {
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -44,6 +50,40 @@ function App() {
               : <Navigate to="/login" replace />
           }
         />
+        <Route
+  path="/admin/users"
+  element={
+    <ProtectedRoute>
+      <AdminUsers />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/AdminDashboard"
+  element={
+    <ProtectedRoute role="admin">
+      <AdminDashboard />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/products"
+  element={
+    <ProtectedRoute>
+      <AdminProducts />
+    </ProtectedRoute>
+  }
+/>
+  <Route path="/admin/login" element={<AdminLogin />} />
+
+<Route
+  path="/admin/AdminDashboard"
+  element={
+    <AdminRoute>
+      <AdminDashboard />
+    </AdminRoute>
+  }
+/>
 
       </Routes>
       <ToastContainer 

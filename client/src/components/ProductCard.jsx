@@ -70,15 +70,13 @@ const ProductCard = ({ product }) => {
       className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition cursor-pointer relative flex flex-col justify-between"
     >
       <img
-        src={product.image || "https://via.placeholder.com/200"}
-        alt={product.title || "Product"}
-        className="w-full h-48 object-contain mb-2"
-      />
-      <h3 className="mt-2 font-semibold text-sm line-clamp-2">
-        {product.title || "No Title"}
-      </h3>
-      <p className="text-gray-700 font-bold mt-1">₹{product.price ?? 0}</p>
+  src={product.image}
+  alt={product.title}
+  className="w-full h-40 object-cover rounded"
+/>
 
+<h3 className="mt-2 font-bold">{product.title}</h3>
+<p>₹ {product.price}</p>
       {!isVendor && (
         <div className="flex justify-between mt-3">
           <button

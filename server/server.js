@@ -9,10 +9,13 @@ import productRoutes from "./routes/productRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
-import chatRoutes from "./routes/chatRoutes.js";
+import chatRoutes from "./routes/chat.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import visitRoutes from "./routes/visitRoutes.js";
 const app = express();
 
-
+console.log("ADMIN FROM ENV:", process.env.ADMIN_EMAIL);
+console.log("PASSWORD FROM ENV:", process.env.ADMIN_PASSWORD);
 // ✅ CORS FIX (IMPORTANT)
 app.use(
   cors({
@@ -34,6 +37,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/user", userRoutes);
 
+app.use("/api/visits", visitRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/chat", chatRoutes);
 // MongoDB Connection
 mongoose

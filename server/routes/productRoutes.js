@@ -5,7 +5,6 @@ const router = express.Router();
 
 
 // ✅ ADD PRODUCT
-// POST /api/products/add
 router.post("/add", async (req, res) => {
   try {
     const {
@@ -25,7 +24,6 @@ router.post("/add", async (req, res) => {
       });
     }
 
-    // ✅ Title must be at least 3 words
     const titleWordCount = title?.trim().split(/\s+/).length;
     if (!title || titleWordCount < 3) {
       return res.status(400).json({
@@ -34,7 +32,6 @@ router.post("/add", async (req, res) => {
       });
     }
 
-    // ✅ Price must be greater than 0
     if (!price || Number(price) <= 0) {
       return res.status(400).json({
         success: false,
@@ -42,7 +39,6 @@ router.post("/add", async (req, res) => {
       });
     }
 
-    // ✅ Description must be at least 10 words
     const descriptionWordCount = description?.trim().split(/\s+/).length;
     if (!description || descriptionWordCount < 10) {
       return res.status(400).json({
@@ -56,8 +52,8 @@ router.post("/add", async (req, res) => {
       price: Number(price),
       description: description.trim(),
       image,
-      category,
-      section: section.toLowerCase(),
+      category: category?.toLowerCase(),
+      section: section?.toLowerCase(),
       vendorId,
     });
 
@@ -75,9 +71,7 @@ router.post("/add", async (req, res) => {
 });
 
 
-
 // ✅ GET ALL PRODUCTS
-// GET /api/products
 router.get("/", async (req, res) => {
   try {
     const products = await Product.find();
@@ -89,13 +83,10 @@ router.get("/", async (req, res) => {
 
 
 // ✅ GET PRODUCTS BY SECTION
-// GET /api/products/section/spotlight
 router.get("/section/:section", async (req, res) => {
   try {
     const section = req.params.section.toLowerCase();
-
     const products = await Product.find({ section });
-
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -103,14 +94,12 @@ router.get("/section/:section", async (req, res) => {
 });
 
 
-// ✅ GET PRODUCTS BY VENDOR (Dashboard Fix)
-// GET /api/products/vendor/:vendorId
+// ✅ GET PRODUCTS BY VENDOR
 router.get("/vendor/:vendorId", async (req, res) => {
   try {
     const products = await Product.find({
       vendorId: req.params.vendorId,
     });
-
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -118,9 +107,38 @@ router.get("/vendor/:vendorId", async (req, res) => {
 });
 
 
-// ✅ GET PRODUCT BY ID (Product Details)
-// GET /api/products/:id
-// ⚠️ ALWAYS LAST GET ROUTE
+// ✅ GET PRODUCTS BY CATEGORY
+router.get("/category/:category", async (req, res) => {
+  try {
+    const category = req.params.category.toLowerCase();
+    const products = await Product.find({ category });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+
+// ✅ SEARCH PRODUCTS  🔥 (IMPORTANT: id se upar hona chahiye)
+router.get("/search", async (req, res) => {
+  try {
+    const keyword = req.query.q;
+
+    if (!keyword) return res.json([]);
+
+    const products = await Product.find({
+      title: { $regex: keyword, $options: "i" },
+    });
+
+    res.json(products);
+
+  } catch (error) {
+    res.status(500).json({ message: "Search Error" });
+  }
+});
+
+
+// ✅ GET PRODUCT BY ID  ⚠️ ALWAYS LAST
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -138,12 +156,10 @@ router.get("/:id", async (req, res) => {
 
 
 // ✅ UPDATE PRODUCT
-// PUT /api/products/:id
 router.put("/:id", async (req, res) => {
   try {
     const { title, price, description } = req.body;
 
-    // ✅ Title validation
     const titleWordCount = title?.trim().split(/\s+/).length;
     if (!title || titleWordCount < 3) {
       return res.status(400).json({
@@ -152,7 +168,6 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    // ✅ Price validation
     if (!price || Number(price) <= 0) {
       return res.status(400).json({
         success: false,
@@ -160,7 +175,6 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    // ✅ Description validation
     const descriptionWordCount = description?.trim().split(/\s+/).length;
     if (!description || descriptionWordCount < 10) {
       return res.status(400).json({
@@ -191,9 +205,7 @@ router.put("/:id", async (req, res) => {
 });
 
 
-
 // ✅ DELETE PRODUCT
-// DELETE /api/products/:id
 router.delete("/:id", async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
@@ -205,20 +217,6 @@ router.delete("/:id", async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
-// GET PRODUCTS BY CATEGORY
-router.get("/category/:category", async (req, res) => {
-  try {
-    const { category } = req.params;
-
-    const products = await Product.find({
-      category: category.toLowerCase(),
-    });
-
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: "Server Error" });
   }
 });
 

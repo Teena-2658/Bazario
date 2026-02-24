@@ -6,7 +6,6 @@ import User from "../models/User.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ===============================
 // CREATE CHECKOUT SESSION
@@ -16,6 +15,17 @@ router.post(
   authMiddleware,
   async (req, res) => {
     try {
+      // ✅ SAFE Stripe initialization (fixes env timing issue)
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res
+          .status(500)
+          .json({ message: "Stripe secret key not configured" });
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2023-10-16",
+      });
+
       const { productId, qty, shippingAddress } = req.body;
 
       // ================= VALIDATION =================
@@ -78,9 +88,9 @@ router.post(
           },
         ],
         success_url:
-          "https://bazario-ruddy.vercel.app/payment-success?session_id={CHECKOUT_SESSION_ID}",
+          `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url:
-          "https://bazario-ruddy.vercel.app/customer-dashboard",
+          `${process.env.CLIENT_URL}/customer-dashboard`,
         metadata: {
           productId: product._id.toString(),
           userId: req.user.id,

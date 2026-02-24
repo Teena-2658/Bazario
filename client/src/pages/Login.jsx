@@ -29,61 +29,65 @@ const Login = () => {
     if (formData.password.length < 6) {
       return "Password must be at least 6 characters";
     }
+    
 
     return null;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
+  const validationError = validateForm();
+  if (validationError) {
+    setError(validationError);
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setError("");
+
+    const cleanedData = {
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password.trim(),
+    };
+
+    const res = await fetch(`${API_URL}/api/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(cleanedData),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.message || "Invalid email or password");
       return;
     }
 
-    try {
-      setLoading(true);
-      setError("");
+    const userData = {
+      ...data.user,
+      token: data.token,
+    };
 
-      // ✅ Trim & Normalize before sending
-      const cleanedData = {
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password.trim(),
-      };
+    localStorage.setItem("user", JSON.stringify(userData));
 
-      const res = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(cleanedData),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Invalid email or password");
-        setLoading(false);
-        return;
-      }
-
-      const userData = {
-        ...data.user,
-        token: data.token,
-      };
-
-      localStorage.setItem("user", JSON.stringify(userData));
-
-      // Redirect after login
+    // ✅ ROLE BASED REDIRECT
+    if (data.user.role === "admin") {
+      window.location.href = "/admin/AdminDashboard";
+    } else {
       window.location.href = "/";
-
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
     }
-  };
+
+  } catch (err) {
+    setError("Something went wrong. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
