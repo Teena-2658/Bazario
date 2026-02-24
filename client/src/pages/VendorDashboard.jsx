@@ -135,36 +135,51 @@ const startEdit = (product) => {
     }
   }, [vendorId, activeTab]); // Tab change pe reload (customers tab pe zaruri)
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch(`${API_URL}/api/products/add`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ ...form, vendorId }),
-      });
-      if (res.ok) {
-        alert("Product Added ✅");
-        setForm({
-          title: "",
-          price: "",
-          description: "",
-          image: "",
-          category: "",
-          section: "spotlight",
-          status: "active",
-        });
-        loadProducts();
-      } else {
-        alert("Failed to add product");
-      }
-    } catch (err) {
-      alert("Error adding product");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    let url = `${API_URL}/api/products/add`;
+    let method = "POST";
+
+    // 🔥 If editing → use PUT
+    if (editingProductId) {
+      url = `${API_URL}/api/products/${editingProductId}`;
+      method = "PUT";
     }
-  };
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ ...form, vendorId }),
+    });
+
+    if (res.ok) {
+      alert(editingProductId ? "Product Updated ✅" : "Product Added ✅");
+
+      setForm({
+        title: "",
+        price: "",
+        description: "",
+        image: "",
+        category: "",
+        section: "spotlight",
+        status: "active",
+      });
+
+      setEditingProductId(null);
+      loadProducts();
+    } else {
+      const errText = await res.text();
+      alert("Failed: " + errText);
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+};
 
   const deleteProduct = async (id) => {
     try {
@@ -518,9 +533,9 @@ const startEdit = (product) => {
                     <option value="active">Active</option>
                     <option value="outofstock">Out Of Stock</option>
                   </select>
-                  <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
-                    Add Product
-                  </button>
+                 <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
+  {editingProductId ? "Update Product" : "Add Product"}
+</button>
                 </form>
               </div>
 
