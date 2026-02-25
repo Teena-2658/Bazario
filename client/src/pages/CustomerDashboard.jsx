@@ -473,12 +473,7 @@ const CustomerDashboard = () => {
             <div className="bg-white p-8 rounded-xl shadow-sm border text-center">
               <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
               <div className="flex flex-wrap justify-center gap-4">
-                <button
-                  onClick={() => navigate("/products")}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition"
-                >
-                  Browse Products
-                </button>
+                
                 <button
                   onClick={() => setActiveTab("cart")}
                   className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition"

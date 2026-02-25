@@ -19,46 +19,58 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2024-06-20", // latest stable
+      apiVersion: "2024-06-20",
     });
 
     const { productId, qty, shippingAddress } = req.body;
 
-    // Validation
-    if (!productId || !qty || !shippingAddress) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-
+    // Your existing validations (keep all of them)
+    if (!productId || !qty || !shippingAddress) return res.status(400).json({ message: "Missing required fields" });
     if (!shippingAddress.name || shippingAddress.name.trim().split(/\s+/).length < 2) {
       return res.status(400).json({ message: "Name must have at least 2 words" });
     }
-
-    if (!/^[0-9]{10}$/.test(shippingAddress.phone)) {
-      return res.status(400).json({ message: "Phone must be 10 digits" });
-    }
-
+    if (!/^[0-9]{10}$/.test(shippingAddress.phone)) return res.status(400).json({ message: "Phone must be 10 digits" });
     if (!shippingAddress.address || shippingAddress.address.trim().length < 5) {
       return res.status(400).json({ message: "Address too short" });
     }
-
-    if (!shippingAddress.city?.trim()) {
-      return res.status(400).json({ message: "City required" });
-    }
-
-    if (!/^[0-9]{6}$/.test(shippingAddress.pincode)) {
-      return res.status(400).json({ message: "Pincode must be 6 digits" });
-    }
-
+    if (!shippingAddress.city?.trim()) return res.status(400).json({ message: "City required" });
+    if (!/^[0-9]{6}$/.test(shippingAddress.pincode)) return res.status(400).json({ message: "Pincode must be 6 digits" });
     if (!Number.isInteger(Number(qty)) || Number(qty) < 1) {
       return res.status(400).json({ message: "Quantity must be positive integer" });
     }
 
     const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    if (!product) return res.status(404).json({ message: "Product not found" });
 
     const totalPrice = product.price * Number(qty);
+
+    // ───── Strong guard for URLs ─────
+    let clientUrl = (process.env.CLIENT_URL || '').trim();
+
+    if (!clientUrl) {
+      console.error("[URL-ERROR] CLIENT_URL is missing or empty in environment variables");
+      return res.status(500).json({
+        message: "Server misconfiguration: CLIENT_URL not set. Please contact support.",
+        debug: "Check Render.com Environment variables"
+      });
+    }
+
+    if (!clientUrl.startsWith('http://') && !clientUrl.startsWith('https://')) {
+      console.error("[URL-ERROR] CLIENT_URL missing protocol:", clientUrl);
+      return res.status(500).json({
+        message: "Server misconfiguration: CLIENT_URL must start with https:// or http://",
+        debug: "Current value: " + clientUrl
+      });
+    }
+
+    // Optional: remove trailing slash if present
+    if (clientUrl.endsWith('/')) clientUrl = clientUrl.slice(0, -1);
+
+    const successUrl = `${clientUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl  = `${clientUrl}/customer-dashboard`;
+
+    console.log("[URL-CHECK] success_url:", successUrl);
+    console.log("[URL-CHECK] cancel_url :", cancelUrl);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -73,8 +85,8 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
           quantity: Number(qty),
         },
       ],
-      success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL}/customer-dashboard`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
         productId: product._id.toString(),
         userId: req.user._id.toString(),
@@ -82,11 +94,12 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
       },
     });
 
+    // Create & save order
     const order = new Order({
-      user: req.user._id,               // सही _id इस्तेमाल
+      user: req.user._id,
       product: product._id,
       qty: Number(qty),
-      price: totalPrice,                // total price save
+      price: totalPrice,
       paymentMethod: "Stripe",
       status: "Pending",
       shippingAddress,
@@ -94,12 +107,16 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
     });
 
     await order.save();
-    console.log("[CREATE-ORDER] Order created successfully:", order._id);
+    console.log("[CREATE-ORDER] Order created successfully:", order._id.toString());
 
     res.json({ url: session.url });
   } catch (error) {
-    console.error("[CREATE-ORDER] Error:", error.message);
-    res.status(500).json({ message: error.message || "Server error" });
+    console.error("[CREATE-ORDER] Full error:", error);
+    console.error("[CREATE-ORDER] Error message:", error.message);
+    res.status(500).json({
+      message: "Failed to create Stripe session",
+      error: error.message || "Unknown error"
+    });
   }
 });
 
