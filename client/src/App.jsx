@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -18,80 +19,80 @@ import AdminRoute from "./components/AdminRoute";
 import AdminUsers from "./pages/AdminUsers";
 import AdminProducts from "./pages/AdminProducts";
 import ProtectedRoute from "./components/ProtectedRoute";
-function App() {
 
-  const user = JSON.parse(localStorage.getItem("user"));
+function App() {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  // Theme logic
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved) return saved;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
 
   return (
-    <BrowserRouter>
-      <Navbar /> 
-      <Routes>
+    // Yeh wrapper sab kuch cover karega → ek saath light/dark apply hoga
+     <div className={`min-h-screen transition-colors duration-300 ${
+  theme === "dark" 
+    ? "bg-gray-950 text-gray-100" 
+    : "bg-gray-50 text-gray-900"
+}`}>
+      <BrowserRouter>
+        <Navbar theme={theme} toggleTheme={toggleTheme} />
 
-        <Route path="/" element={<Home />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/payment-success" element={<PaymentSuccess />} />
-    <Route path="/category/:category" element={<CategoryProducts />} />
-        <Route
-          path="/vendor-dashboard"
-          element={
-            user?.role === "vendor"
-              ? <VendorDashboard />
-              : <Navigate to="/login" replace />
-          }
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/category/:category" element={<CategoryProducts />} />
+
+          <Route
+            path="/vendor-dashboard"
+            element={user?.role === "vendor" ? <VendorDashboard /> : <Navigate to="/login" replace />}
+          />
+
+          <Route
+            path="/customer-dashboard"
+            element={user?.role === "customer" ? <CustomerDashboard /> : <Navigate to="/login" replace />}
+          />
+
+          <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+          <Route path="/admin/products" element={<ProtectedRoute><AdminProducts /></ProtectedRoute>} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+
+          <Route
+            path="/admin/AdminDashboard"
+            element={<AdminRoute><AdminDashboard /></AdminRoute>}
+          />
+        </Routes>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme={theme}   // ← Toast bhi dark/light ke saath sync rahega
         />
 
-        <Route
-          path="/customer-dashboard"
-          element={
-            user?.role === "customer"
-              ? <CustomerDashboard />
-              : <Navigate to="/login" replace />
-          }
-        />
-        <Route
-  path="/admin/users"
-  element={
-    <ProtectedRoute>
-      <AdminUsers />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/admin/products"
-  element={
-    <ProtectedRoute>
-      <AdminProducts />
-    </ProtectedRoute>
-  }
-/>
-  <Route path="/admin/login" element={<AdminLogin />} />
-
-<Route
-  path="/admin/AdminDashboard"
-  element={
-    <AdminRoute>
-      <AdminDashboard />
-    </AdminRoute>
-  }
-/>
-
-      </Routes>
-      <ToastContainer 
-        position="top-right" 
-        autoClose={3000} 
-        hideProgressBar={false}
-        newestOnTop={true}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
         <Footer />
-    </BrowserRouter>
+      </BrowserRouter>
+    </div>
   );
 }
 

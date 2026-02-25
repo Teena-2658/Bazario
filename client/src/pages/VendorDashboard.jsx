@@ -328,11 +328,12 @@ const handleSubmit = async (e) => {
           </button>
         ))}
         <button
-          onClick={() => navigate("/")}
-          className="mt-10 w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transition"
-        >
-          Logout
-        </button>
+    onClick={() => navigate("/")}
+    className="mt-6 w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-gray-700 transition"
+  >
+    ← Back to Home
+  </button>
+       
       </div>
 
       <div className="flex-1 ml-64">

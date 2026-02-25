@@ -1,3 +1,106 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ────────────────────────────────────────────── */
+/* LIGHT MODE DEFAULTS (root) */
+/* ────────────────────────────────────────────── */
+:root {
+  --bg-body:    #f8fafc;       /* light gray */
+  --bg-card:    white;
+  --text-main:  #111827;       /* gray-900 */
+  --text-muted: #4b5563;       /* gray-600 */
+  --border:     #e5e7eb;       /* gray-200 */
+  --shadow:     0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+/* ────────────────────────────────────────────── */
+/* DARK MODE VARIABLES & GLOBAL OVERRIDES */
+/* ────────────────────────────────────────────── */
+.dark {
+  --bg-body:    #0f172a;       /* slate-950 – deep blackish */
+  --bg-card:    #1e293b;       /* slate-800 – dark cards */
+  --text-main:  #f1f5f9;       /* slate-100 – bright white */
+  --text-muted: #cbd5e1;       /* slate-300 – light gray */
+  --border:     #334155;       /* slate-700 */
+  --shadow:     0 10px 15px -3px rgba(0,0,0,0.5);
+}
+
+/* Body & html base */
+html, body {
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+/* Force text white/light in dark mode (sab jagah) */
+.dark * {
+  color: var(--text-main) !important;
+}
+
+/* Muted/secondary text (gray wala) ko light gray kar do */
+.dark .text-gray-500,
+.dark .text-gray-600,
+.dark .text-gray-700,
+.dark .text-gray-400,
+.dark .text-gray-300,
+.dark .opacity-80 {
+  color: var(--text-muted) !important;
+}
+
+/* Cards, panels, backgrounds ko dark kar do */
+.dark .bg-white,
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-slate-50,
+.dark .bg-gradient-to-b,
+.dark .bg-gradient-to-r {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+}
+
+/* Borders sab dark */
+.dark .border,
+.dark .border-b,
+.dark .border-t,
+.dark .border-r,
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: var(--border) !important;
+}
+
+/* Headings bold & white */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: var(--text-main) !important;
+  font-weight: 700;
+}
+
+/* Chart specific fixes (Recharts) */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: var(--border) !important;
+}
+
+.dark .recharts-text {
+  fill: var(--text-muted) !important;
+}
+
+.dark .recharts-tooltip-wrapper {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-main) !important;
+}
+
+/* Buttons text white rahe */
+.dark button, .dark .btn {
+  color: white !important;
+}
+
+/* Optional: Shadow dark mode mein deep */
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl {
+  box-shadow: var(--shadow) !important;
+}
