@@ -15,8 +15,8 @@ import {
 const VendorDashboard = () => {
   const navigate = useNavigate();
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const vendorId = storedUser?._id || null;
-  const token = localStorage.getItem("token") || "";
+  // const vendorId = storedUser?._id || null;
+  // const token = localStorage.getItem("token") || "";
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [products, setProducts] = useState([]);
@@ -45,19 +45,37 @@ const [editingProductId, setEditingProductId] = useState(null);
 
   const [isEditing, setIsEditing] = useState(false);
 
+  const [vendorId, setVendorId] = useState(null);
+const [token, setToken] = useState("");
+
+useEffect(() => {
+  // console.log("Reading localStorage...");
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const savedToken = user.token || "";
+
+
+  console.log("User:", user);
+  console.log("Token:", savedToken);
+
+  setVendorId(user?._id || null);
+  setToken(savedToken || "");
+}, []);
+
   // Load products for vendor
   const loadProducts = async () => {
-    if (!vendorId) return;
-    try {
-      const res = await fetch(`${API_URL}/api/products/vendor/${vendorId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setProducts(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Products load error:", err);
-    }
-  };
+    console.log("products loaded:");
+  if (!vendorId) return;
+  try {
+    const res = await fetch(`${API_URL}/api/products/vendor/${vendorId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    setProducts(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error(err);
+  }
+};
 const startEdit = (product) => {
   setEditingProductId(product._id);
   
@@ -74,6 +92,7 @@ const startEdit = (product) => {
 };
   // Load profile
   const loadProfile = async () => {
+    console.log("profile loaded:");
     if (!vendorId) return;
     try {
       const res = await fetch(`${API_URL}/api/vendors/${vendorId}`, {
@@ -94,48 +113,107 @@ const startEdit = (product) => {
       console.error("Profile fetch error:", err);
     }
   };
-
+  
   // Load customers (main fix - separate API call)
-  const loadCustomers = async () => {
-    if (!vendorId || !token) {
+ const loadCustomers = async () => {
+  if (!vendorId || !token) {
+    setCustomers([]);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/orders/vendor-orders`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      console.log("Vendor orders API failed:", res.status, await res.text());
       setCustomers([]);
       return;
     }
-    try {
-      const res = await fetch(
-  `${API_URL}/api/vendors/${vendorId}/customers`,
-  {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }
-);
 
+    const orders = await res.json();
+    console.log("Raw vendor orders:", orders);
 
-      if (res.ok) {
-        const data = await res.json();
-        setCustomers(Array.isArray(data) ? data : []);
-      } else {
-        console.log("Customers API failed:", res.status);
-        const text = await res.text();
-        console.log("Response text:", text);
-        setCustomers([]);
+    // Group orders by customer (user._id)
+    const customerMap = new Map();
+
+    orders.forEach((order) => {
+      const user = order.user;
+      if (!user?._id) return;
+
+      const userId = user._id;
+
+      if (!customerMap.has(userId)) {
+        customerMap.set(userId, {
+          _id: userId,
+          name: user.name || "Unknown",
+          email: user.email || "—",
+          phone: user.phone || "—",
+          products: [],
+          lastOrderDate: order.createdAt,
+          orderCount: 0,
+        });
       }
-    } catch (err) {
-      console.error("Customers load error:", err);
-      setCustomers([]);
+
+      const cust = customerMap.get(userId);
+
+      // Add product info to this customer's list
+      cust.products.push({
+        title: order.product?.title || "Product",
+        price: order.price || order.product?.price * order.qty,
+        qty: order.qty,
+        orderedAt: order.createdAt,
+      });
+
+      cust.orderCount += 1;
+
+      // Update last order date if newer
+      if (new Date(order.createdAt) > new Date(cust.lastOrderDate)) {
+        cust.lastOrderDate = order.createdAt;
+      }
+    });
+
+    const uniqueCustomers = Array.from(customerMap.values());
+    console.log("Processed unique customers:", uniqueCustomers);
+
+    setCustomers(uniqueCustomers);
+  } catch (err) {
+    console.error("Error loading customers from orders:", err);
+    setCustomers([]);
+  }
+};
+
+  // useEffect(() => {
+  //   if (vendorId && token) {
+  //     setLoading(true);
+  //     loadProducts();
+  //     loadProfile();
+  //     loadCustomers(); // Customers tab ke liye fresh load
+  //     setLoading(false);
+  //   }
+  // }, [vendorId, activeTab]); // Tab change pe reload (customers tab pe zaruri)
+
+useEffect(() => {
+  const loadAllData = async () => {
+    if (!vendorId || !token) {
+      setLoading(false);
+      return;
     }
+
+    setLoading(true);
+    await Promise.all([
+      loadProducts(),
+      loadProfile(),
+      loadCustomers(),
+    ]);
+    setLoading(false);
   };
 
-  useEffect(() => {
-    if (vendorId && token) {
-      setLoading(true);
-      loadProducts();
-      loadProfile();
-      loadCustomers(); // Customers tab ke liye fresh load
-      setLoading(false);
-    }
-  }, [vendorId, activeTab]); // Tab change pe reload (customers tab pe zaruri)
+  loadAllData();
+}, [vendorId, token, activeTab]);
 
 const handleSubmit = async (e) => {
   e.preventDefault();

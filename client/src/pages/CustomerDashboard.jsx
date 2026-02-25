@@ -6,6 +6,7 @@ const CustomerDashboard = () => {
   const navigate = useNavigate();
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const token = storedUser.token || "";
+  // console.log("CustomerDashboard initialized. User:", storedUser, "Token:", token);
 
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
