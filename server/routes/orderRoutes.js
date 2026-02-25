@@ -209,14 +209,19 @@ router.put("/orders/:id/status", authMiddleware, async (req, res) => {
 
 router.get("/vendor-orders", authMiddleware, async (req, res) => {
   try {
-    const vendorProducts = await Product.find({ vendor: req.user._id }).select("_id");
+    const vendorProducts = await Product.find({
+      vendorId: req.user._id.toString(),
+    }).select("_id");
+
     const productIds = vendorProducts.map(p => p._id);
 
     if (productIds.length === 0) {
       return res.json([]);
     }
 
-    const orders = await Order.find({ product: { $in: productIds } })
+    const orders = await Order.find({
+      product: { $in: productIds },
+    })
       .populate("user", "name email phone")
       .populate("product", "title price image")
       .sort({ createdAt: -1 })
