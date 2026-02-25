@@ -23,7 +23,9 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",   // local frontend
-      "https://bazario-ruddy.vercel.app" // deployed frontend
+      "https://bazario-ruddy.vercel.app", // deployed frontend
+      "https://bazario-eg4p.onrender.com",
+      "http://localhost:5000",
     ],
     credentials: true,
   })
