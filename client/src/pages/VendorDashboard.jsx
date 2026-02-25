@@ -102,13 +102,15 @@ const startEdit = (product) => {
       return;
     }
     try {
-      const res = await fetch(`${API_URL}/api/vendor/customers`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await fetch(
+  `${API_URL}/api/vendors/${vendorId}/customers`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
+
 
       if (res.ok) {
         const data = await res.json();
