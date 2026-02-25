@@ -5,7 +5,7 @@ const AdminProducts = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const res = await fetch("http://localhost:5000/api/admin/products");
+      const res = await fetch(`${API_URL}/api/admin/products`);
       const data = await res.json();
       setProducts(data);
     };

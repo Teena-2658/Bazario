@@ -5,7 +5,7 @@ const AdminUsers = () => {
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const res = await fetch("http://localhost:5000/api/admin/users");
+      const res = await fetch(`${API_URL}/api/admin/users`);
       const data = await res.json();
       setUsers(data);
     };

@@ -54,7 +54,7 @@ const Home = () => {
     };
   }, []);
 useEffect(() => {
-  axios.post("http://localhost:5000/api/visits/track");
+  axios.post(`${API_URL}/api/visits/track`);
 }, []);
   return (
     <div className="bg-[#f1f3f6] min-h-screen">
