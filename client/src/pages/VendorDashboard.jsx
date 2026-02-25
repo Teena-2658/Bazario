@@ -685,68 +685,124 @@ const handleSubmit = async (e) => {
           )}
 
           {activeTab === "customers" && (
-            <div className="bg-white p-8 rounded-xl shadow-lg">
-              <h1 className="text-3xl font-bold text-gray-800 mb-6">My Customers</h1>
-              <p className="text-gray-600 mb-8">
-              
-                {customers.length > 0 && (
-                  <span className="ml-2 text-blue-600">({customers.length} unique customers)</span>
-                )}
+  <div className="space-y-8">
+    {/* Header */}
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+        My Customers
+      </h1>
+      <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full text-sm font-medium text-indigo-700 border border-indigo-100">
+        <span className="font-bold">{customers.length}</span>
+        <span>unique {customers.length === 1 ? "customer" : "customers"}</span>
+      </div>
+    </div>
+
+    {/* Content */}
+    {customers.length === 0 ? (
+      <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-2xl p-12 text-center shadow-inner">
+        <div className="mx-auto w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+          <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-semibold text-gray-800 mb-3">No customers yet</h3>
+        <p className="text-gray-600 max-w-md mx-auto">
+         Hey, if any customer buy your product then they will appear here with their details.
+        </p>
+      </div>
+    ) : (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {customers.map((cust) => (
+          <div
+            key={cust._id || cust.email}
+            className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-50/40 transition-all duration-300 flex flex-col group max-h-[520px]"
+          >
+            {/* Top - Identity */}
+            <div className="p-6 pb-4 bg-gradient-to-r from-indigo-50/50 to-blue-50/40 border-b border-indigo-100/60">
+              <h3 className="text-xl font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors truncate">
+                {cust.name || "Customer"}
+              </h3>
+              <p className="text-sm text-gray-600 mt-1 truncate">
+                {cust.email || "—"}
               </p>
 
-              {customers.length === 0 ? (
-                <div className="text-center py-16 text-gray-500">
-                  <p className="text-xl">No customers yet</p>
-                  <p className="mt-2 text-gray-400">
-                  
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {customers.map((cust) => (
-                    <div
-                      key={cust._id || cust.email}
-                      className="border rounded-xl p-6 bg-gray-50 hover:bg-gray-100 transition shadow-sm"
-                    >
-                      <div className="mb-4">
-                        <h3 className="text-xl font-bold text-gray-800">
-                          {cust.name || "Customer"}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {cust.email || "Email not available"}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 mb-2">
-                        
-                        </p>
-                        <ul className="list-disc pl-5 space-y-1 text-gray-700">
-                          {cust.products && cust.products.length > 0 ? (
-                            cust.products.map((prod, i) => (
-                              <li key={i}>
-                                {prod.title || prod.name || "Product"} 
-                                {prod.price ? ` - ₹${prod.price}` : ""}
-                              </li>
-                            ))
-                          ) : (
-                            <li className="text-gray-500 italic">No product details available</li>
-                          )}
-                        </ul>
-                      </div>
-
-                      {cust.lastOrderDate && (
-                        <p className="text-xs text-gray-500 mt-4">
-                          Last order: {new Date(cust.lastOrderDate).toLocaleDateString("en-IN")}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+              {cust.phone && cust.phone !== "—" && (
+                <div className="mt-3 inline-flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  {cust.phone}
                 </div>
               )}
             </div>
-          )}
 
+            {/* Middle - All Orders (no slice, full list + scroll) */}
+            <div className="p-6 flex-1 overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+                <h4 className="text-base font-semibold text-gray-800">Purchased Items</h4>
+                <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                  {cust.orderCount} order{cust.orderCount > 1 ? 's' : ''}
+                </span>
+              </div>
+
+              {cust.products?.length > 0 ? (
+                <div className="flex-1 overflow-y-auto pr-2 custom-scroll">
+                  <ul className="space-y-3.5">
+                    {cust.products.map((prod, i) => (
+                      <li 
+                        key={i}
+                        className="flex justify-between items-start gap-3 text-sm border-b border-gray-50 pb-3 last:border-0 last:pb-0"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 truncate">
+                            {prod.title || "Product"}
+                          </p>
+                          {prod.qty && prod.qty > 1 && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Qty: {prod.qty}
+                            </p>
+                          )}
+                        </div>
+                        {prod.price && (
+                          <span className="font-semibold text-gray-900 whitespace-nowrap text-right">
+                            ₹{Number(prod.price).toLocaleString("en-IN")}
+                            {prod.qty && prod.qty > 1 && (
+                              <span className="text-xs text-gray-600 block">
+                                total
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 italic text-center py-6">
+                  No detailed product information available
+                </p>
+              )}
+            </div>
+
+            {/* Bottom - Last Order */}
+            {cust.lastOrderDate && (
+              <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-t border-gray-100 text-sm flex justify-between items-center text-gray-700 font-medium">
+                <span>Last ordered on</span>
+                <time className="text-indigo-700">
+                  {new Date(cust.lastOrderDate).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric"
+                  })}
+                </time>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
           {activeTab === "analytics" && (
             <div className="bg-white p-8 rounded-xl shadow-lg">
               <h2 className="text-3xl font-bold mb-8">Analytics Overview</h2>

@@ -26,24 +26,33 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, productsRes, visitRes] =
-        await Promise.all([
-          axios.get(`${API_URL}/api/admin/stats`),
-          axios.get(`${API_URL}/api/admin/users`),
-          axios.get(`${API_URL}/api/products`),
-          axios.get(`${API_URL}/api/visits/all`),
-        ]);
+      const [statsRes, usersRes, productsRes, visitRes] = await Promise.all([
+        axios.get(`${API_URL}/api/admin/stats`),
+        axios.get(`${API_URL}/api/admin/users`),
+        axios.get(`${API_URL}/api/products`),
+        axios.get(`${API_URL}/api/visits/all`),
+      ]);
 
       setStats(statsRes.data);
       setUsers(usersRes.data);
       setProducts(productsRes.data);
-      setVisitData(visitRes.data);
+      setVisitData(visitDataFormatter(visitRes.data)); // optional: better date format
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {
       setLoading(false);
     }
   };
+
+  // Optional helper – make dates nicer for chart (DD-MM)
+  const visitDataFormatter = (data) =>
+    data.map((item) => ({
+      ...item,
+      date: new Date(item.date).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+      }),
+    }));
 
   const deleteUser = async (id) => {
     if (!window.confirm("Delete this user permanently?")) return;
@@ -63,17 +72,17 @@ const AdminDashboard = () => {
     <div className="flex min-h-screen bg-slate-50">
       <aside className="hidden md:block w-72 bg-white border-r shadow-sm">
         <div className="p-8">
-          <h2 className="text-2xl font-bold text-indigo-700 mb-10">
+          <h2 className="text-3xl font-bold text-indigo-700 mb-10">
             Admin Panel
           </h2>
           {["dashboard", "products", "vendors", "customers"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`block w-full text-left px-4 py-3 rounded-lg mb-2 ${
+              className={`block w-full text-left px-5 py-3.5 rounded-xl mb-3 text-lg font-medium transition-all ${
                 activeTab === tab
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "hover:bg-slate-100"
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -82,45 +91,50 @@ const AdminDashboard = () => {
         </div>
       </aside>
 
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-6 md:p-8">
         {loading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+          <div className="flex justify-center items-center h-[70vh]">
+            <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
           </div>
         ) : (
           <>
             {activeTab === "dashboard" && (
               <>
-                <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
+                  Dashboard Overview
+                </h1>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                  <StatCard title="Total Users" value={stats.totalUsers ?? 0} />
-                  <StatCard
-                    title="Total Products"
-                    value={stats.totalProducts ?? 0}
-                  />
-                  <StatCard
-                    title="Total Orders"
-                    value={stats.totalOrders ?? 0}
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                  <StatCard title="Total Users" value={stats.totalUsers ?? 0} color="indigo" />
+                  <StatCard title="Total Products" value={stats.totalProducts ?? 0} color="blue" />
+                  <StatCard title="Total Orders" value={stats.totalOrders ?? 0} color="green" />
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow">
-                  <h2 className="text-xl font-semibold mb-4">
-                    Daily Visitors
+                <div className="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+                    Daily Visitors Trend
                   </h2>
-                  <div className="h-80">
+                  <div className="h-80 md:h-96">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={visitData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="date" stroke="#6b7280" />
+                        <YAxis stroke="#6b7280" />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "#1f2937",
+                            color: "white",
+                            borderRadius: "8px",
+                            border: "none",
+                          }}
+                        />
                         <Line
                           type="monotone"
                           dataKey="count"
                           stroke="#4f46e5"
                           strokeWidth={3}
+                          dot={{ r: 4, strokeWidth: 2 }}
+                          activeDot={{ r: 8 }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -131,35 +145,27 @@ const AdminDashboard = () => {
 
             {activeTab === "products" && (
               <>
-                <h1 className="text-3xl font-bold mb-6">Products</h1>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {products.map((p) => (
-                    <div
-                      key={p._id}
-                      className="bg-white rounded-xl shadow p-4"
-                    >
-                      <img
-                        src={p.image}
-                        alt={p.title}
-                        className="w-full h-48 object-cover rounded"
-                      />
-                      <h3 className="font-semibold mt-3">{p.title}</h3>
-                      <p className="text-sm text-gray-500">{p.category}</p>
-                      <p className="font-bold mt-2">
-                        ₹{Number(p.price).toLocaleString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
+                  All Products
+                </h1>
+                {products.length === 0 ? (
+                  <div className="text-center py-16 text-gray-500">
+                    <p className="text-xl">No products found</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {products.map((p) => (
+                      <ProductCard key={p._id} product={p} />
+                    ))}
+                  </div>
+                )}
               </>
             )}
 
             {(activeTab === "vendors" || activeTab === "customers") && (
-              <UserCards
+              <UserList
                 title={activeTab === "vendors" ? "Vendors" : "Customers"}
-                users={
-                  activeTab === "vendors" ? vendors : customers
-                }
+                users={activeTab === "vendors" ? vendors : customers}
                 onDelete={deleteUser}
               />
             )}
@@ -170,30 +176,97 @@ const AdminDashboard = () => {
   );
 };
 
-const StatCard = ({ title, value }) => (
-  <div className="bg-white p-6 rounded-xl shadow">
-    <p className="text-sm text-gray-500">{title}</p>
-    <p className="text-3xl font-bold mt-2">{value}</p>
+// ──────────────────────────────────────────────
+// Reusable Components
+// ──────────────────────────────────────────────
+
+const StatCard = ({ title, value, color = "indigo" }) => {
+  const colors = {
+    indigo: "bg-indigo-50 text-indigo-700",
+    blue: "bg-blue-50 text-blue-700",
+    green: "bg-green-50 text-green-700",
+  };
+
+  return (
+    <div className={`p-6 rounded-2xl shadow-md ${colors[color] || "bg-gray-50"}`}>
+      <p className="text-sm font-medium opacity-80">{title}</p>
+      <p className="text-4xl font-bold mt-3">{value.toLocaleString()}</p>
+    </div>
+  );
+};
+
+const ProductCard = ({ product }) => (
+  <div className="bg-white rounded-2xl shadow hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group">
+    <div className="relative h-52 overflow-hidden">
+      <img
+        src={product.image || "https://via.placeholder.com/400x300?text=No+Image"}
+        alt={product.title}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        onError={(e) => {
+          e.target.src = "https://via.placeholder.com/400x300?text=Product";
+        }}
+      />
+    </div>
+    <div className="p-5">
+      <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
+        {product.title}
+      </h3>
+      <p className="text-sm text-gray-500 mt-1">{product.category || "—"}</p>
+      <p className="text-xl font-bold text-indigo-700 mt-3">
+        ₹{Number(product.price).toLocaleString("en-IN")}
+      </p>
+    </div>
   </div>
 );
 
-const UserCards = ({ title, users, onDelete }) => (
+const UserList = ({ title, users, onDelete }) => (
   <div>
-    <h1 className="text-3xl font-bold mb-6">{title}</h1>
+    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
+      {title} ({users.length})
+    </h1>
+
     {users.length === 0 ? (
-      <p>No {title} found</p>
+      <div className="text-center py-16 text-gray-500">
+        <p className="text-xl">No {title.toLowerCase()} registered yet</p>
+      </div>
     ) : (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {users.map((user) => (
-          <div key={user._id} className="bg-white p-5 rounded-xl shadow">
-            <h3 className="font-semibold">{user.name}</h3>
-            <p className="text-sm text-gray-500">{user.email}</p>
-            <button
-              onClick={() => onDelete(user._id)}
-              className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
-            >
-              Delete
-            </button>
+          <div
+            key={user._id}
+            className="bg-white rounded-2xl shadow hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col"
+          >
+            <div className="p-6 flex flex-col items-center text-center border-b border-gray-100 bg-gradient-to-b from-gray-50 to-white">
+              <img
+                src={
+                  user.image ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    user.name || user.email.split("@")[0]
+                  )}&background=4f46e5&color=fff&size=128`
+                }
+                alt={user.name || "User"}
+                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md mb-4"
+                onError={(e) => {
+                  e.target.src = "https://ui-avatars.com/api/?name=?&background=ccc&color=000";
+                }}
+              />
+              <h3 className="font-semibold text-xl text-gray-900">
+                {user.name || "No Name"}
+              </h3>
+              <p className="text-sm text-gray-600 mt-1 break-all">{user.email}</p>
+              {user.phone && (
+                <p className="text-sm text-gray-500 mt-1">+91 {user.phone}</p>
+              )}
+            </div>
+
+            <div className="p-5 flex justify-center">
+              <button
+                onClick={() => onDelete(user._id)}
+                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+              >
+                Delete User
+              </button>
+            </div>
           </div>
         ))}
       </div>
