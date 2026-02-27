@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from 'axios';
 import { API_URL } from "../config";
 import { useNavigate } from "react-router-dom";
 import {
@@ -44,10 +45,46 @@ const [editingProductId, setEditingProductId] = useState(null);
   });
 
   const [isEditing, setIsEditing] = useState(false);
-
+const [reviews, setReviews] = useState([]);
   const [vendorId, setVendorId] = useState(null);
 const [token, setToken] = useState("");
+// Example — adjust endpoint to your real one
+useEffect(() => {
+ const fetchReviews = async () => {
+  if (!token) {
+    console.log("No token → skipping reviews fetch");
+    setReviews([]);
+    return;
+  }
 
+  try {
+    const res = await fetch(`${API_URL}/api/reviews/vendor/all`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Reviews fetch failed:", res.status, errText);
+      setReviews([]);
+      return;
+    }
+
+    const data = await res.json();
+    console.log("Vendor reviews loaded:", data.length, "reviews");
+    setReviews(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error("Reviews network error:", err);
+    setReviews([]);
+  }
+};
+
+  if (storedUser?._id && token) {
+    fetchReviews();
+  }
+}, [token, storedUser?._id]);
 useEffect(() => {
   // console.log("Reading localStorage...");
 
@@ -214,6 +251,10 @@ useEffect(() => {
 
   loadAllData();
 }, [vendorId, token, activeTab]);
+useEffect(() => {
+  axios.get("/api/reviews/vendor/all")
+    .then(res => setReviews(res.data));
+}, []);
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -316,17 +357,17 @@ const handleSubmit = async (e) => {
       {/* SIDEBAR */}
       <div className="w-64 bg-white shadow-xl p-6 space-y-5 fixed h-full overflow-y-auto">
         <h2 className="text-2xl font-bold text-gray-800">Vendor Panel</h2>
-        {["dashboard", "profile", "products", "customers", "analytics"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`block w-full text-left p-3 rounded-lg transition ${
-              activeTab === tab ? "bg-blue-600 text-white font-semibold" : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            {tab === "customers" ? "Customers" : tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
+        {["dashboard", "profile", "products", "customers", "reviews", "analytics"].map((tab) => (
+  <button
+    key={tab}
+    onClick={() => setActiveTab(tab)}
+    className={`block w-full text-left p-3 rounded-lg transition ${
+      activeTab === tab ? "bg-blue-600 text-white font-semibold" : "text-gray-700 hover:bg-gray-100"
+    }`}
+  >
+    {tab === "customers" ? "Customers" : tab === "reviews" ? "Reviews" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+  </button>
+))}
         <button
     onClick={() => navigate("/")}
     className="mt-6 w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-gray-700 transition"
@@ -422,7 +463,35 @@ const handleSubmit = async (e) => {
               </div>
             </>
           )}
+{activeTab === "reviews" && (
+  <div className="space-y-8">
+    <h1 className="text-3xl font-bold text-gray-900">Customer Reviews</h1>
 
+    {reviews.length === 0 ? (
+      <div className="bg-white p-12 rounded-xl shadow text-center">
+        <p className="text-gray-500">No reviews yet for your products.</p>
+      </div>
+    ) : (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {reviews.map((review) => (
+          <div key={review._id} className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition flex flex-col">
+            <h3 className="text-lg font-semibold text-gray-800">{review.product?.title || "Product"}</h3>
+            <p className="text-sm text-gray-500 mt-1">By: {review.user?.name || "Anonymous"}</p>
+            <p className="mt-2 text-yellow-500 font-bold">Rating: {review.rating} ⭐</p>
+            <p className="mt-2 text-gray-700">{review.comment}</p>
+            <time className="text-xs text-gray-400 mt-2">
+              {new Date(review.createdAt).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </time>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
           {activeTab === "profile" && (
             <div className="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto space-y-8">
               <div className="flex justify-between items-center">
@@ -745,6 +814,34 @@ const handleSubmit = async (e) => {
                   {cust.orderCount} order{cust.orderCount > 1 ? 's' : ''}
                 </span>
               </div>
+{cust.products?.length > 0 && reviews.length > 0 && (
+  <div className="space-y-4 mt-4">
+    {cust.products.map((prod) => {
+      // Filter reviews for this product by this customer
+      const prodReviews = reviews.filter(
+        (r) =>
+          r.product?._id === prod._id &&
+          r.user?._id === cust._id
+      );
+
+      return prodReviews.map((r) => (
+        <div key={r._id} className="p-3 border rounded-md bg-gray-50">
+          <h4 className="font-semibold text-gray-800">{r.product?.title || prod.title}</h4>
+          <p className="text-sm text-gray-500">By: {r.user?.name || "Customer"}</p>
+          <p className="text-yellow-500 font-bold">Rating: {r.rating} ⭐</p>
+          <p className="text-gray-700">{r.comment}</p>
+          <time className="text-xs text-gray-400">
+            {new Date(r.createdAt).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </time>
+        </div>
+      ));
+    })}
+  </div>
+)}
 
               {cust.products?.length > 0 ? (
                 <div className="flex-1 overflow-y-auto pr-2 custom-scroll">

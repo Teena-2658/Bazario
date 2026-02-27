@@ -14,6 +14,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import visitRoutes from "./routes/visitRoutes.js";
 import vendorRoutes from "./routes/vendorRoutes.js";
 import customerRoute from "./routes/customerRoute.js";
+import reviewRoutes    from './routes/reviewRoutes.js';
 const app = express();
 
 console.log("ADMIN FROM ENV:", process.env.ADMIN_EMAIL);
@@ -45,6 +46,7 @@ app.use("/api/visits", visitRoutes);
 app.use("/api/customer", customerRoute);
 app.use("/api/admin", adminRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/reviews", reviewRoutes);
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)

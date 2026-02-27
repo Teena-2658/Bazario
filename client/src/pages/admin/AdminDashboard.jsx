@@ -75,7 +75,7 @@ const AdminDashboard = () => {
           <h2 className="text-3xl font-bold text-indigo-700 mb-10">
             Admin Panel
           </h2>
-          {["dashboard", "products", "vendors", "customers"].map((tab) => (
+         {["dashboard", "products", "reviewAnalytics", "vendors", "customers"].map((tab) => ( 
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -161,7 +161,97 @@ const AdminDashboard = () => {
                 )}
               </>
             )}
+{activeTab === "reviewAnalytics" && (
+  <>
+    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
+      Product Review Analytics
+    </h1>
 
+    {products.filter((p) => (p.totalReviews || 0) > 0).length === 0 ? (
+      <p className="text-gray-500 text-lg">
+        No reviewed products found
+      </p>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {products
+          .filter((product) => (product.totalReviews || 0) > 0)
+          .map((product) => {
+            const total = product.totalReviews || 0;
+            const good = product.goodCount || 0;
+            const bad = product.badCount || 0;
+
+            const goodPercent =
+              total > 0 ? Math.round((good / total) * 100) : 0;
+
+            const badPercent =
+              total > 0 ? Math.round((bad / total) * 100) : 0;
+
+            return (
+              <div
+                key={product._id}
+                className="bg-white p-5 rounded-2xl shadow border"
+              >
+                <img
+                  src={product.image}
+                  alt={product.title}
+                  className="h-40 w-full object-cover rounded-lg"
+                />
+
+                <h3 className="mt-3 font-semibold text-lg">
+                  {product.title}
+                </h3>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  ⭐ {product.averageRating?.toFixed(1) || 0} (
+                  {total} reviews)
+                </p>
+
+                <div className="mt-4 space-y-3">
+
+                  {/* 👍 Good Bar (show only if > 0) */}
+                  {good > 0 && (
+                    <div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-600">👍 Good</span>
+                        <span>
+                          {good} ({goodPercent}%)
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 h-2 rounded">
+                        <div
+                          className="bg-green-500 h-2 rounded"
+                          style={{ width: `${goodPercent}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 👎 Bad Bar (show only if > 0) */}
+                  {bad > 0 && (
+                    <div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-red-500">👎 Bad</span>
+                        <span>
+                          {bad} ({badPercent}%)
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 h-2 rounded">
+                        <div
+                          className="bg-red-500 h-2 rounded"
+                          style={{ width: `${badPercent}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            );
+          })}
+      </div>
+    )}
+  </>
+)}
             {(activeTab === "vendors" || activeTab === "customers") && (
               <UserList
                 title={activeTab === "vendors" ? "Vendors" : "Customers"}

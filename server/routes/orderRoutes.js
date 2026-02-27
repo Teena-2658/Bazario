@@ -4,8 +4,8 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-
 const router = express.Router();
+import Review from "../models/Review.js";
 
 // ================================================
 // CREATE CHECKOUT SESSION
@@ -179,9 +179,14 @@ router.get("/my-orders", authMiddleware, async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    console.log("[MY-ORDERS] Found:", orders.length);
-    if (orders.length > 0) {
-      console.log("[MY-ORDERS] First order ID:", orders[0]._id);
+    // 🔥 Attach review info to each order
+    for (let order of orders) {
+      const review = await Review.findOne({
+        user: userId,
+        product: order.product?._id,
+      }).lean();
+
+      order.review = review || null;
     }
 
     res.json(orders);

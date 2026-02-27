@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 
-const ProductRow = ({ title, url, priceFilter }) => {
+const ProductRow = ({ title, url, priceFilter, onBuyNow }) => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [viewAll, setViewAll] = useState(false);

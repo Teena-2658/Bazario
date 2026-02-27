@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { API_URL } from "../config";
 import { motion } from "framer-motion";
+import StarRating from "../components/StarRating";
+import axios from "axios";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -13,6 +15,20 @@ const ProductDetails = () => {
   const [product, setProduct] = useState(null);
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
+
+const [reviews, setReviews] = useState([]);
+useEffect(() => {
+  axios.get(`${API_URL}/api/reviews/${id}`)
+    .then(res => {
+      console.log("REVIEWS:", res.data); // debug
+      setReviews(Array.isArray(res.data) ? res.data : []);
+    })
+    .catch(err => {
+      console.error("Review fetch error:", err);
+      setReviews([]);
+    });
+}, [id]);
+
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -137,7 +153,13 @@ const ProductDetails = () => {
                   >
                     Add to Cart
                   </button>
-                  
+               
+
+
+<hr />
+              
+
+
                 </div>
               </>
             )}
@@ -145,6 +167,35 @@ const ProductDetails = () => {
             <p className="text-sm text-gray-500 mt-6">Section: {product.section}</p>
           </motion.div>
         </motion.div>
+      
+        {/* REVIEWS SECTION - FULL WIDTH BOTTOM */}
+<div className="mt-16 border-t pt-10">
+  <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
+
+  {reviews.length > 0 ? (
+    <div className="space-y-6">
+      {reviews.map((rev) => (
+        <div
+          key={rev._id}
+          className="bg-gray-50 p-5 rounded-lg shadow-sm"
+        >
+          <div className="flex justify-between items-center mb-2">
+            <strong className="text-gray-800">
+              {rev.user?.name || "Anonymous"}
+            </strong>
+            <div className="text-yellow-500 text-sm">
+              {"★".repeat(rev.rating)}
+              {"☆".repeat(5 - rev.rating)}
+            </div>
+          </div>
+          <p className="text-gray-600">{rev.comment}</p>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-gray-400">No reviews yet</p>
+  )}
+</div>
       </div>
     </div>
   );

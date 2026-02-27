@@ -6,7 +6,7 @@ const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    // Token है या नहीं चेक
+    // Token h ya nhi
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       console.log("[AUTH] No Bearer token found in header");
       return res.status(401).json({ message: "No token provided" });
